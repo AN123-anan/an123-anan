@@ -204,6 +204,7 @@
         .search-empty { color:var(--text-secondary); padding:8px; font-size:13px; }
         .search-more { color:var(--text-secondary); font-size:11px; padding:2px 8px; }
     </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div id="bgLayer"></div>
@@ -280,22 +281,17 @@
     <!-- 图鉴 -->
     <div class="page" id="page-collection">
         <div class="card">
-    <div class="card-title">📖 角色图鉴</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:12px;">
-        <select id="collectionPoolFilter"><option value="all">全部池子</option></select>
-        <select id="collectionTypeFilter">
-            <option value="all">全部类型</option>
-            <option value="limited">限定池</option>
-            <option value="standard">常驻池</option>
-        </select>
-        <select id="collectionStatusFilter"><option value="all">全部状态</option><option value="owned">已收集</option><option value="missing">未拥有</option></select>
-        <input type="text" id="collectionSearchInput" placeholder="🔍 搜索角色/池子/时间" style="flex:1;min-width:120px;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--input-bg);">
-        <button class="btn small primary" id="addCollectionItemBtn">＋ 添加</button>
-        <button class="btn small" id="syncCollectionBtn">📥 同步</button>
-        <span style="font-size:12px;">已收集 <b id="ownedCount">0</b> / <b id="totalCount">0</b></span>
-    </div>
-    <div id="collectionGridContainer" class="collection-grid"></div>
-</div>
+            <div class="card-title">📖 角色图鉴</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:12px;">
+                <select id="collectionPoolFilter"><option value="all">全部池子</option></select>
+                <select id="collectionStatusFilter"><option value="all">全部状态</option><option value="owned">已收集</option><option value="missing">未拥有</option></select>
+                <input type="text" id="collectionSearchInput" placeholder="🔍 搜索角色/池子/时间" style="flex:1;min-width:120px;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--input-bg);">
+                <button class="btn small primary" id="addCollectionItemBtn">＋ 添加</button>
+                <button class="btn small" id="syncCollectionBtn">📥 同步</button>
+                <span style="font-size:12px;">已收集 <b id="ownedCount">0</b> / <b id="totalCount">0</b></span>
+            </div>
+            <div id="collectionGridContainer" class="collection-grid"></div>
+        </div>
     </div>
 
     <!-- 数据管理 -->
@@ -994,6 +990,7 @@
             }
             records.splice(idx,1); 
            saveRecords();
+syncRecordToCollection(record);
 const date = selectedDate;
 const stats = JSON.parse(localStorage.getItem('nightfall_calc_stats') || '{}');
 if (!(date in stats)) {
@@ -1557,109 +1554,85 @@ if (!(date in stats)) {
     });
 
     // ===== 图鉴页面 =====
-  function renderCollectionPage() {
-    const ownedNames = new Set();
-    records.forEach(r => {
-        if (r.rarity !== 'SSR') return;
-        if (r.character) ownedNames.add(r.character.trim());
-    });
-
-    const poolFilter = $('collectionPoolFilter').value;
-    const typeFilter = $('collectionTypeFilter').value;
-    const statusFilter = $('collectionStatusFilter').value;
-    const searchKeyword = $('collectionSearchInput').value.trim().toLowerCase();
-
-    let filtered = collectionItems;
-
-    if (poolFilter !== 'all') {
-        filtered = filtered.filter(item => item.poolId === poolFilter);
-    }
-
-    if (typeFilter !== 'all') {
-        filtered = filtered.filter(item => {
-            const pool = templates.find(t => t.id === item.poolId);
-            if (!pool) return false;
-            return typeFilter === 'limited' ? pool.isLimited : !pool.isLimited;
+    function renderCollectionPage(){
+        const ownedNames = new Set();
+        records.forEach(r => {
+            if(r.rarity !== 'SSR') return;
+            if(r.character) ownedNames.add(r.character.trim());
         });
-    }
 
-    if (statusFilter === 'owned') {
-        filtered = filtered.filter(item => ownedNames.has(item.name.trim()));
-    } else if (statusFilter === 'missing') {
-        filtered = filtered.filter(item => !ownedNames.has(item.name.trim()));
-    }
+        const poolFilter = $('collectionPoolFilter').value;
+        const statusFilter = $('collectionStatusFilter').value;
+        const searchKeyword = $('collectionSearchInput').value.trim().toLowerCase();
 
-    if (searchKeyword) {
-        filtered = filtered.filter(item => {
-            const pool = templates.find(t => t.id === item.poolId) || { name: '未知', startDate: '', endDate: '' };
-            const nameMatch = item.name.toLowerCase().includes(searchKeyword);
-            const poolMatch = pool.name.toLowerCase().includes(searchKeyword);
-            const acquiredMatch = item.acquiredDate ? item.acquiredDate.includes(searchKeyword) : false;
-            const activityMatch = (pool.startDate + ' ~ ' + pool.endDate).toLowerCase().includes(searchKeyword);
-            return nameMatch || poolMatch || acquiredMatch || activityMatch;
-        });
-    }
+        let filtered = collectionItems;
+        if(poolFilter !== 'all') filtered = filtered.filter(item => item.poolId === poolFilter);
+        if(statusFilter === 'owned') filtered = filtered.filter(item => ownedNames.has(item.name.trim()));
+        else if(statusFilter === 'missing') filtered = filtered.filter(item => !ownedNames.has(item.name.trim()));
 
-    const total = collectionItems.length;
-    const ownedTotal = collectionItems.filter(item => ownedNames.has(item.name.trim())).length;
-    $('ownedCount').textContent = ownedTotal;
-    $('totalCount').textContent = total;
-
-    const grid = $('collectionGridContainer');
-    grid.innerHTML = '';
-    if (!filtered.length) {
-        grid.innerHTML = '<div style="color:var(--text-secondary);grid-column:1/-1;text-align:center;padding:20px 0;">' +
-            (searchKeyword ? '🔍 没有匹配的图鉴条目' : '暂无图鉴条目') +
-            '</div>';
-        return;
-    }
-
-    filtered.forEach(item => {
-        const pool = templates.find(t => t.id === item.poolId) || { name: '未知', startDate: '', endDate: '', isLimited: false };
-        const isOwned = ownedNames.has(item.name.trim());
-        const acquired = item.acquiredDate || '未知';
-        const activity = pool.startDate && pool.endDate ? `${pool.startDate.slice(0,10)} ~ ${pool.endDate.slice(0,10)}` : '无活动';
-        const typeLabel = pool.isLimited ? '限定' : '常驻';
-        
-        // 优先使用图鉴自身图片，如果没有则从同名SSR记录中查找
-        let imageSrc = item.image;
-        if (!imageSrc) {
-            const rec = records.find(r => r.character && r.character.trim() === item.name.trim() && r.rarity === 'SSR' && r.image);
-            if (rec) imageSrc = rec.image;
+        if(searchKeyword){
+            filtered = filtered.filter(item => {
+                const pool = templates.find(t=>t.id===item.poolId) || { name: '未知', startDate: '', endDate: '' };
+                const nameMatch = item.name.toLowerCase().includes(searchKeyword);
+                const poolMatch = pool.name.toLowerCase().includes(searchKeyword);
+                const acquiredMatch = item.acquiredDate ? item.acquiredDate.includes(searchKeyword) : false;
+                const activityMatch = (pool.startDate + ' ~ ' + pool.endDate).toLowerCase().includes(searchKeyword);
+                return nameMatch || poolMatch || acquiredMatch || activityMatch;
+            });
         }
 
-        const card = document.createElement('div');
-        card.className = `collection-card ${isOwned ? 'owned' : 'missing'}`;
-        card.innerHTML = `
-    <div class="card-actions">
-        <button class="edit-collection-btn" data-id="${item.id}" title="编辑">✏️</button>
-        <button class="delete-collection-btn" data-id="${item.id}" title="删除">🗑️</button>
-    </div>
-    ${imageSrc ? `<img src="${imageSrc}" onclick="showImage('${imageSrc}')" style="width:60px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--border);background:#f0ebe0;cursor:pointer;">` : `<div style="width:60px;height:60px;background:#f0ebe0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#b8aa94;border:1px solid var(--border);">无图</div>`}
-    <div class="item-name">${item.name}</div>
-    <div class="pool-name">${pool.name}</div>
-    <div class="meta-text" style="color:var(--gold);">${typeLabel}</div>
-    <div class="meta-text">获取：${acquired}</div>
-    <div class="${isOwned ? 'owned-badge' : 'missing-badge'}">${isOwned ? '✅ 已收集' : '❌ 未拥有'}</div>
-`;
-        grid.appendChild(card);
-    });
+        const total = collectionItems.length;
+        const ownedTotal = collectionItems.filter(item => ownedNames.has(item.name.trim())).length;
+        $('ownedCount').textContent = ownedTotal;
+        $('totalCount').textContent = total;
 
-    grid.querySelectorAll('.edit-collection-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const id = btn.dataset.id;
-            editCollectionItem(id);
+        const grid = $('collectionGridContainer');
+        grid.innerHTML = '';
+        if(!filtered.length){ 
+            grid.innerHTML = '<div style="color:var(--text-secondary);grid-column:1/-1;text-align:center;padding:20px 0;">' + 
+                (searchKeyword ? '🔍 没有匹配的图鉴条目' : '暂无图鉴条目') + 
+            '</div>'; 
+            return; 
+        }
+
+        filtered.forEach(item => {
+            const pool = templates.find(t=>t.id===item.poolId) || { name: '未知', startDate: '', endDate: '' };
+            const isOwned = ownedNames.has(item.name.trim());
+            const acquired = item.acquiredDate || '未知';
+            const activity = pool.startDate && pool.endDate ? `${pool.startDate.slice(0,10)} ~ ${pool.endDate.slice(0,10)}` : '无活动';
+            const card = document.createElement('div');
+            card.className = `collection-card ${isOwned ? 'owned' : 'missing'}`;
+            card.innerHTML = `
+                <div class="card-actions">
+                    <button class="edit-collection-btn" data-id="${item.id}" title="编辑">✏️</button>
+                    <button class="delete-collection-btn" data-id="${item.id}" title="删除">🗑️</button>
+                </div>
+                <img src="${item.image||''}" onclick="showImage('${item.image}')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22%3E%3Crect fill=%22%23f0ebe0%22 width=%2280%22 height=%2280%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23b8aa94%22 font-size=%2212%22%3E无图%3C/text%3E%3C/svg%3E'">
+                <div class="item-name" onclick="jumpRecordByChar('${item.name}')">${item.name}</div>
+                <div class="pool-name">${pool.name}</div>
+                <div style="font-size:12px;color:#888;">抽中次数：${getCharDrawCount(item.name)}</div>
+                <div class="meta-text">获取：${acquired}</div>
+                <div class="meta-text">活动：${activity}</div>
+                <div class="${isOwned ? 'owned-badge' : 'missing-badge'}">${isOwned ? '✅ 已收集' : '❌ 未拥有'}</div>
+            `;
+            grid.appendChild(card);
         });
-    });
-    grid.querySelectorAll('.delete-collection-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const id = btn.dataset.id;
-            deleteCollectionItem(id);
+
+        grid.querySelectorAll('.edit-collection-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = btn.dataset.id;
+                editCollectionItem(id);
+            });
         });
-    });
-}
+        grid.querySelectorAll('.delete-collection-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = btn.dataset.id;
+                deleteCollectionItem(id);
+            });
+        });
+    }
 
     function editCollectionItem(id){
         const item = collectionItems.find(i => i.id === id);
@@ -1693,7 +1666,6 @@ if (!(date in stats)) {
         templates.forEach(t=>{ const o=document.createElement('option'); o.value=t.id; o.textContent=t.name; sel.appendChild(o); });
     }
     $('collectionPoolFilter').addEventListener('change', renderCollectionPage);
-    $('collectionTypeFilter').addEventListener('change', renderCollectionPage);
     $('collectionStatusFilter').addEventListener('change', renderCollectionPage);
     $('collectionSearchInput').addEventListener('input', renderCollectionPage);
 
@@ -1982,28 +1954,19 @@ if (!(date in stats)) {
             lastSSR: document.getElementById('calcLastSSR').value
         }));
     }
-   function loadCalcSettings() {
-    const saved = localStorage.getItem('nightfall_calc_settings');
-    if (saved) {
-        try {
-            const data = JSON.parse(saved);
-            if (data.direction) document.getElementById('calcDirection').value = data.direction;
-            if (data.perPage) document.getElementById('calcPerPage').value = data.perPage;
-            if (data.poolType) document.getElementById('calcPoolType').value = data.poolType;
-            if (data.lastSSR !== undefined) document.getElementById('calcLastSSR').value = data.lastSSR;
-            document.getElementById('calcLastSSRGroup').style.display = data.poolType === 'standard' ? 'flex' : 'none';
-        } catch(e) {}
+    function loadCalcSettings() {
+        const saved = localStorage.getItem('nightfall_calc_settings');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                if (data.direction) document.getElementById('calcDirection').value = data.direction;
+                if (data.perPage) document.getElementById('calcPerPage').value = data.perPage;
+                if (data.poolType) document.getElementById('calcPoolType').value = data.poolType;
+                if (data.lastSSR !== undefined) document.getElementById('calcLastSSR').value = data.lastSSR;
+                document.getElementById('calcLastSSRGroup').style.display = data.poolType === 'standard' ? 'flex' : 'none';
+            } catch(e) {}
+        }
     }
-    autoFetchLastSSR();
-}
-
-function autoFetchLastSSR() {
-    const ssrHistory = JSON.parse(localStorage.getItem('nightfall_standard_ssr_history') || '[]');
-    if (ssrHistory.length > 0) {
-        const last = ssrHistory[ssrHistory.length - 1];
-        document.getElementById('calcLastSSR').value = last.totalPulls;
-    }
-}
     loadCalcSettings();
     document.getElementById('calcDirection').addEventListener('change', saveCalcSettings);
     document.getElementById('calcPerPage').addEventListener('change', saveCalcSettings);
@@ -2079,47 +2042,27 @@ function autoFetchLastSSR() {
     });
 
     document.getElementById('applyCalcBtn').addEventListener('click', function() {
-    const date = document.getElementById('recordDate').value;
-    if (!date) { alert('请先在日历中选择日期'); return; }
-
-    const draw = parseInt(document.getElementById('calcDrawPulls').textContent);
-    const total = parseInt(document.getElementById('calcTotalPulls').textContent);
-    const poolType = document.getElementById('calcPoolType').value;
-
-    let pullsToRecord = draw;
-
-    if (poolType === 'standard') {
-        const ssrHistory = JSON.parse(localStorage.getItem('nightfall_standard_ssr_history') || '[]');
-        let lastTotalPulls = 0;
-        if (ssrHistory.length > 0) {
-            lastTotalPulls = ssrHistory[ssrHistory.length - 1].totalPulls || 0;
+        const date = document.getElementById('recordDate').value;
+        if (!date) { alert('请先在日历中选择日期'); return; }
+        const draw = parseInt(document.getElementById('calcDrawPulls').textContent);
+        const total = parseInt(document.getElementById('calcTotalPulls').textContent);
+        const poolType = document.getElementById('calcPoolType').value;
+        const lastSSR = parseInt(document.getElementById('calcLastSSR').value) || 0;
+        let pullsToRecord = draw;
+        if (poolType === 'standard' && lastSSR > 0 && lastSSR < draw) {
+            pullsToRecord = draw - lastSSR;
         }
-        if (lastTotalPulls > 0 && lastTotalPulls < total) {
-            pullsToRecord = total - lastTotalPulls;
-        }
-    }
-
-    if (!draw || draw <= 0) { alert('请先点击计算'); return; }
-
-    document.getElementById('pullsInput').value = pullsToRecord;
-    document.getElementById('currentPityInput').value = document.getElementById('calcPityPulls').textContent;
-    updatePityStatus();
-
-    if (poolType === 'standard') {
-        let ssrHistory = JSON.parse(localStorage.getItem('nightfall_standard_ssr_history') || '[]');
-        ssrHistory.push({ date: date, totalPulls: total });
-        localStorage.setItem('nightfall_standard_ssr_history', JSON.stringify(ssrHistory));
-        document.getElementById('calcLastSSR').value = total;
-    }
-
-    const stats = JSON.parse(localStorage.getItem('nightfall_calc_stats') || '{}');
-    stats[date] = total;
-    localStorage.setItem('nightfall_calc_stats', JSON.stringify(stats));
-
-    document.getElementById('calcModal').classList.remove('active');
-    document.getElementById('recordCharacter').focus();
-    showDayDetail(date);
-});
+        if (!draw || draw <= 0) { alert('请先点击计算'); return; }
+        document.getElementById('pullsInput').value = pullsToRecord;
+        document.getElementById('currentPityInput').value = document.getElementById('calcPityPulls').textContent;
+        updatePityStatus();
+        const stats = JSON.parse(localStorage.getItem('nightfall_calc_stats') || '{}');
+        stats[date] = total;
+        localStorage.setItem('nightfall_calc_stats', JSON.stringify(stats));
+        document.getElementById('calcModal').classList.remove('active');
+        document.getElementById('recordCharacter').focus();
+        showDayDetail(date);
+    });
 
     document.querySelectorAll('.modal-close').forEach(b => b.addEventListener('click', ()=> b.parentElement.parentElement.classList.remove('active')));
 
@@ -2256,6 +2199,198 @@ function autoFetchLastSSR() {
     setInterval(renderPastPools, 60000);
     checkBackup();
 })();
+// ========== 记录<->图鉴双向关联工具函数 ==========
+// ========== 记录<->图鉴双向关联工具函数（适配你代码字段character/templateId） ==========
+function fillOldPoolData() {
+  const records = JSON.parse(localStorage.getItem("records")||"[]");
+  let recUpdate = false;
+  records.forEach(r => {
+    if (!r.pool) { r.pool = "未知池子"; recUpdate = true; }
+    if (!r.poolType) { r.poolType = "未知"; recUpdate = true; }
+  });
+  if (recUpdate) localStorage.setItem("records", JSON.stringify(records));
+
+  const coll = JSON.parse(localStorage.getItem("collectionItems")||"[]");
+  let collUpdate = false;
+  coll.forEach(item => {
+    if (!item.poolName) { item.poolName = "未知池子"; collUpdate = true; }
+    if (!item.poolType) { item.poolType = "未知"; collUpdate = true; }
+  });
+  if (collUpdate) localStorage.setItem("collectionItems", JSON.stringify(coll));
+}
+
+function syncRecordToCollection(newRecord) {
+  let collection = JSON.parse(localStorage.getItem("collectionItems")||"[]");
+  const charName = newRecord.character.trim();
+  const poolId = newRecord.templateId;
+  const pool = getTemplateById(poolId);
+  const poolName = pool ? pool.name : "未知池子";
+  const poolType = (pool && pool.isLimited) ? "限定" : "常驻";
+
+  const existIdx = collection.findIndex(item => item.character === charName);
+  if (existIdx > -1) {
+    collection[existIdx].owned = true;
+    if (collection[existIdx].poolName === "未知池子") {
+      collection[existIdx].poolName = poolName;
+      collection[existIdx].poolType = poolType;
+    }
+  } else {
+    const newItem = {
+      id: "col_" + Date.now() + Math.random().toString(36).slice(2,8),
+      character: charName,
+      poolName: poolName,
+      poolType: poolType,
+      owned: true,
+      imgUrl: newRecord.image || "",
+      meta: "自动由抽卡记录生成"
+    };
+    collection.push(newItem);
+  }
+  localStorage.setItem("collectionItems", JSON.stringify(collection));
+  renderCollectionPage();
+}
+
+function jumpRecordByChar(charName) {
+  switchPage("page-record");
+  const searchInput = document.getElementById("recordSearch");
+  if(searchInput) {
+    searchInput.value = charName;
+    renderSearchResults();
+  }
+}
+
+function syncCollectionPoolToRecords(charName, newPool, newPoolType) {
+  const records = JSON.parse(localStorage.getItem("records")||"[]");
+  let changed = false;
+  records.forEach(r => {
+    if (r.name === charName) {
+      r.templateId = getTemplateIdByName(newPool);
+      changed = true;
+    }
+  });
+  if (changed) localStorage.setItem("records", JSON.stringify(records));
+}
+// 页面加载自动补全旧数据池子字段
+fillOldPoolData();</script>
+<script>
+// 替换为你的项目地址、Publishable密钥
+const SUPABASE_URL = "https://dpwkqujotopffxumsuad.supabase.co";
+const SUPABASE_KEY = "sb_publishable_sVMTj34S6aHOMFdKt0Fpxw_YnVzizjf";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let currentUserId = null;
+let syncInterval = null;
+
+// 全局刷新页面所有数据视图
+function renderAll() {
+  saveRecords();
+  saveTemplates();
+  saveCollection();
+  renderCalendar();
+  renderCollectionPage();
+  renderLuckRanking();
+  renderBanners();
+  renderPastPools();
+}
+
+// 从云端拉取自己的存档
+async function loadCloudData() {
+  if (!currentUserId) return;
+  const { data } = await supabase
+    .from("user_data")
+    .select("*")
+    .eq("user_id", currentUserId)
+    .single();
+
+  if (!data) return;
+  records = data.records || [];
+  templates = data.templates || [];
+  collectionItems = data.collection || [];
+  document.getElementById("currentPityInput").value = data.pity || 0;
+  localSyncStamp = data.update_time;
+  localStorage.setItem('sync_stamp', localSyncStamp);
+  renderAll();
+  alert("✅ 已同步云端全部抽卡数据");
+}
+
+// 本地数据上传云端
+async function saveToCloud() {
+  if (!currentUserId) return;
+  const syncData = {
+    user_id: currentUserId,
+    records,
+    templates,
+    collection: collectionItems,
+    pity: parseInt(document.getElementById("currentPityInput").value) || 0,
+    update_time: Date.now()
+  };
+  await supabase.from("user_data").upsert(syncData);
+  localStorage.setItem('sync_stamp', Date.now());
+}
+
+// 劫持所有增删改操作，自动同步云端
+const originAddRecord = addRecord;
+addRecord = function () {
+  originAddRecord();
+  saveToCloud();
+};
+
+window.deleteRecord = function (idx) {
+  const oldDel = window.deleteRecord;
+  oldDel(idx);
+  saveToCloud();
+};
+
+document.getElementById("saveEditBtn").onclick = function () {
+  const oldSave = document.getElementById("saveEditBtn").onclick;
+  oldSave();
+  saveToCloud();
+};
+
+document.getElementById("saveCollectionBtn").onclick = function () {
+  const oldCollSave = document.getElementById("saveCollectionBtn").onclick;
+  oldCollSave();
+  saveToCloud();
+};
+
+// 登录/注册逻辑
+async function initAuthSync() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    currentUserId = user.id;
+    await loadCloudData();
+    // 实时监听云端数据变化，多设备即时同步
+    supabase.channel("user_sync_channel")
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "user_data",
+        filter: `user_id.eq.${currentUserId}`
+      }, () => loadCloudData())
+      .subscribe();
+    // 每8秒自动备份本地数据
+    syncInterval = setInterval(saveToCloud, 8000);
+  } else {
+    // 弹窗输入邮箱密码
+    const email = prompt("请输入邮箱注册/登录");
+    const pwd = prompt("请输入密码（至少6位）");
+    if (!email || !pwd) {
+      alert("登录失败，刷新页面重试");
+      return;
+    }
+    // 尝试登录，不存在则自动注册
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      const { error: regErr } = await supabase.auth.signUp({ email, password });
+      if (regErr) alert("注册失败：" + regErr.message);
+      else location.reload();
+    } else {
+      location.reload();
+    }
+  }
+}
+
+// 页面加载自动执行登录校验
+initAuthSync();
 </script>
 </body>
 </html>

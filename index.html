@@ -1,0 +1,2261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>夜幕笔记 · 抽卡手记</title>
+    <link id="dynamicFontLink" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f5f0e6;
+            --surface: rgba(255,252,245,0.7);
+            --border: #d6c9b5;
+            --text: #4a3f35;
+            --text-secondary: #7d6f5e;
+            --gold: #b8860b;
+            --radius: 8px;
+            --font: 'ZCOOL KuaiLe','PingFang SC','Microsoft YaHei',sans-serif;
+            --shadow: 0 2px 12px rgba(0,0,0,0.04);
+            --card-bg: #fffef9;
+            --input-bg: #faf7f0;
+            --btn-bg: #efe6d5;
+            --btn-hover-bg: #e4d8c1;
+            --warn-border: #e67e22;
+            --danger-border: #c0392b;
+            --cute-pink: #f8c8d4;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: var(--font); font-size:14px; display:flex; justify-content:center; min-height:100vh; letter-spacing:0.02em; position:relative; background:transparent; }
+        #bgLayer { position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1; transition:background-color 0.5s ease; background-color:var(--bg); }
+        .container { width:100%; max-width:1200px; display:flex; flex-direction:column; gap:16px; padding:30px 16px; position:relative; z-index:1; }
+        h1 { font-size:20px; font-weight:400; letter-spacing:0.2em; text-align:center; color:#5a4a32; background:rgba(255,252,245,0.7); backdrop-filter:blur(8px); padding:10px 20px; border-radius:40px; display:inline-block; align-self:center; border:1px solid var(--border); }
+        .nav-bar { display:flex; justify-content:center; gap:4px; flex-wrap:wrap; background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); padding:4px; box-shadow:var(--shadow); }
+        .nav-btn, .tutorial-trigger-btn { padding:6px 14px; border-radius:30px; border:1px solid transparent; background:transparent; color:var(--text-secondary); cursor:pointer; font-size:13px; font-weight:400; letter-spacing:0.08em; transition:all 0.2s; font-family:var(--font); }
+        .nav-btn:hover, .tutorial-trigger-btn:hover { background:var(--btn-bg); }
+        .nav-btn.active { background:var(--gold); color:#fff; border-color:var(--gold); font-weight:600; }
+        .tutorial-trigger-btn { background: var(--cute-pink); color: #fff; border-color: var(--cute-pink); margin-left: 6px; font-size: 13px; }
+        .page { display:none; flex-direction:column; gap:16px; }
+        .page.active { display:flex; }
+        .card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); }
+        .card-title { font-size:12px; font-weight:400; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.15em; margin-bottom:12px; padding-bottom:4px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+        .card-title .title-right { font-size:12px; text-transform:none; color:var(--text-secondary); cursor:pointer; }
+        .card-title .title-right:hover { color:var(--gold); }
+        .banner-area { display:flex; flex-direction:column; gap:8px; }
+        .banner-card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); padding:10px 14px; display:flex; align-items:center; gap:10px; box-shadow:var(--shadow); }
+        .banner-card.ending-soon { border-color:var(--warn-border); background:#fff5e6; }
+        .banner-card.ending-final { border-color:var(--danger-border); background:#fdecea; animation:pulse 1.5s infinite; }
+        @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(231,76,60,0.4);} 70%{box-shadow:0 0 0 6px rgba(231,76,60,0);} 100%{box-shadow:0 0 0 0 rgba(231,76,60,0);} }
+        .banner-img { width:36px; height:36px; border-radius:6px; object-fit:cover; border:1px solid var(--border); flex-shrink:0; cursor:pointer; }
+        .banner-info { flex:1; }
+        .banner-name { font-size:14px; font-weight:400; }
+        .banner-meta { font-size:12px; color:var(--text-secondary); display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+        .banner-close { background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:16px; }
+        .calendar-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+        .calendar-header button { background:var(--btn-bg); border:1px solid var(--border); color:var(--text); width:28px; height:28px; border-radius:50%; font-size:14px; cursor:pointer; }
+        .calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; text-align:center; font-size:12px; }
+        .day-name { color:var(--text-secondary); padding:4px 0; font-size:10px; }
+        .day-cell { aspect-ratio:1/1; border-radius:var(--radius); background:rgba(245,240,230,0.5); display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; position:relative; border:1px solid transparent; font-size:12px; }
+        .day-cell:hover { background:rgba(220,200,160,0.3); border-color:var(--border); }
+        .day-cell.other-month { color:#b8aa94; opacity:0.5; cursor:default; }
+        .day-cell.today { background:#fdf6e3; border:1px solid var(--gold); }
+        .day-cell.selected { background:#efe3cd; border-color:var(--gold); }
+        .dot { width:4px; height:4px; border-radius:50%; position:absolute; bottom:3px; }
+        .dot-ou-super{background:#f1c40f}.dot-ou-high{background:#f39c12}.dot-ou-low{background:#e67e22}.dot-normal{background:#95a5a6}.dot-miss{background:#b0b0b0}
+        .day-detail{margin-top:12px;border-top:1px solid var(--border);padding-top:12px}
+        .record-list{display:flex;flex-direction:column;gap:6px}
+        .record-item { display:flex; align-items:center; gap:6px; padding:6px 10px; background:rgba(255,252,245,0.6); border-radius:6px; border-bottom:1px solid #e8ddce; flex-wrap:wrap; font-size:13px; }
+        .record-left { display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:50px; max-width:60px; text-align:center; flex-shrink:0; }
+        .record-left .record-img { width:40px; height:40px; border-radius:6px; object-fit:cover; border:1px solid var(--border); margin-bottom:2px; cursor:pointer; }
+        .record-left .char-name { font-size:10px; line-height:1.2; color:var(--text); word-break:break-word; max-width:100%; }
+        .record-middle { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; flex:1; padding:2px 6px 2px 2px; }
+        .record-middle .pool-name { font-size:12px; color:var(--text-secondary); }
+        .record-middle .pull-count { font-size:12px; color:var(--text-secondary); }
+        .record-middle .star-tag { font-size:12px; font-weight:500; min-width:32px; }
+        .record-middle .result-tag { font-size:11px; min-width:28px; }
+        .record-actions { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+        .ssr-tag{color:var(--gold)}.sr-tag{color:#6a5acd}.r-tag{color:#5b7a5b}
+        .up-tag{color:#27ae60}.miss-tag{color:#999}
+        .luck-badge{display:inline-block;padding:1px 8px;border-radius:20px;font-size:11px;margin-left:4px}
+        .luck-super-ou{background:#f1c40f;color:#fff}.luck-high-ou{background:#f39c12;color:#fff}.luck-low-ou{background:#e67e22;color:#fff}.luck-normal{background:#95a5a6;color:#fff}.luck-low-fei{background:#8e44ad;color:#fff}.luck-high-fei{background:#7d3c98;color:#fff}.luck-super-fei{background:#4a235a;color:#fff}
+        .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;align-items:end;margin-bottom:10px}
+        .form-group{display:flex;flex-direction:column;gap:3px}
+        .form-group label{font-size:10px;color:var(--text-secondary);text-transform:uppercase}
+        input,select{background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;color:var(--text);font-size:12px;outline:none;font-family:var(--font)}
+        input:focus,select:focus{border-color:var(--gold)}
+        select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a3f35' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px}
+        .btn{background:var(--btn-bg);border:1px solid var(--border);border-radius:var(--radius);padding:6px 14px;color:var(--text);font-size:12px;font-weight:400;letter-spacing:0.05em;cursor:pointer;text-transform:uppercase;font-family:var(--font)}
+        .btn:hover{background:var(--btn-hover-bg)}
+        .btn.primary{background:#d4a017;border-color:#b8860b;color:#fff}
+        .btn.danger{background:#e8dccf;border-color:var(--border);color:#8b0000}
+        .btn.small{padding:3px 10px;font-size:11px}
+        .actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+        .rank-container { display:flex; flex-direction:column; gap:16px; margin-top:8px; }
+        .rank-section { border:1px solid var(--border); border-radius:var(--radius); padding:12px; background:rgba(255,252,245,0.4); }
+        .rank-section-title { font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:8px; }
+        .rank-list { display:flex; flex-direction:column; gap:4px; }
+        .rank-item { display:flex; align-items:center; gap:8px; padding:4px 10px; background:#fdf8f0; border-radius:var(--radius); border:1px solid #ece1cc; font-size:12px; flex-wrap:wrap; }
+        .rank-num { font-size:14px; font-weight:600; color:var(--gold); width:22px; text-align:center; }
+        .rank-pool { flex:1; min-width:50px; }
+        .rank-luck { font-weight:600; margin-right:6px; font-size:12px; }
+        .rank-bar { flex:2; height:8px; background:#e8ddce; border-radius:6px; overflow:hidden; min-width:50px; }
+        .rank-fill { height:100%; border-radius:6px; background:linear-gradient(90deg,#f1c40f,#e67e22); transition:width 0.4s; }
+        .rank-empty { color:var(--text-secondary); font-size:12px; padding:4px 0; }
+        .deco-img{position:fixed;z-index:0;pointer-events:none;max-width:100px;max-height:100px;opacity:0.85}
+        .deco-top-left{top:15px;left:15px}.deco-top-right{top:15px;right:15px}.deco-bottom-left{bottom:15px;left:15px}.deco-bottom-right{bottom:15px;right:15px}
+        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(6px);justify-content:center;align-items:center;z-index:1000}
+        .modal.active{display:flex}
+        .modal-content{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px;width:90%;max-width:520px;color:var(--text);max-height:80vh;overflow-y:auto;position:relative;font-size:14px;}
+        .modal-close{position:absolute;top:12px;right:18px;color:var(--text-secondary);font-size:24px;cursor:pointer}
+        #imageModal .modal-content { max-width:95%; max-height:95%; padding:0; background:transparent; border:none; box-shadow:none; display:flex; justify-content:center; align-items:center; }
+        #imageModal .modal-close { position:fixed; top:20px; right:30px; color:#fff; font-size:36px; z-index:1001; text-shadow:0 0 20px rgba(0,0,0,0.9); cursor:pointer; }
+        #imageModal .modal-close:hover { color:#ddd; }
+        #modalImage { max-width:90%; max-height:90%; border-radius:12px; box-shadow:0 0 50px rgba(0,0,0,0.7); object-fit:contain; }
+        .graduated-badge{background:#f1c40f;color:#fff;padding:0 10px;border-radius:20px;font-size:11px;margin-left:4px}
+        .collection-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(120px,1fr)); gap:10px; margin-top:8px; }
+        .collection-card { background:#fdf8f0; border:2px solid #ece1cc; border-radius:var(--radius); padding:8px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:3px; transition:all 0.2s; position:relative; font-size:12px; }
+        .collection-card.owned { border-color:var(--gold); background:#fffdf5; }
+        .collection-card.missing { opacity:0.7; filter:grayscale(0.2); }
+        .collection-card img { width:60px; height:60px; border-radius:8px; object-fit:cover; border:1px solid var(--border); background:#f0ebe0; cursor:pointer; }
+        .collection-card .item-name { font-size:13px; font-weight:500; color:var(--text); }
+        .collection-card .pool-name { font-size:10px; color:var(--text-secondary); }
+        .collection-card .meta-text { font-size:9px; color:var(--text-secondary); line-height:1.3; }
+        .collection-card .owned-badge { font-size:10px; background:var(--gold); color:#fff; padding:0 8px; border-radius:10px; }
+        .collection-card .missing-badge { font-size:10px; background:#ccc; color:#555; padding:0 8px; border-radius:10px; }
+        .collection-card .card-actions { position:absolute; top:2px; right:2px; display:flex; gap:2px; }
+        .collection-card .card-actions button { background:rgba(255,255,255,0.8); border:1px solid var(--border); border-radius:8px; width:18px; height:18px; font-size:10px; cursor:pointer; line-height:1; padding:0; }
+        .tutorial-pages { position:relative; }
+        .tutorial-page { display:none; animation:fadeIn 0.3s ease; }
+        .tutorial-page.active { display:block; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        .tutorial-nav { display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+        .tutorial-nav .dots { display:flex; gap:5px; }
+        .tutorial-nav .dots span { width:7px; height:7px; border-radius:50%; background:#ddd; cursor:pointer; transition:background 0.2s; }
+        .tutorial-nav .dots span.active { background:var(--gold); }
+        .tutorial-nav .dots span:hover { background:#bbb; }
+        .tutorial-nav .btn { padding:4px 14px; font-size:12px; }
+        .tutorial-step { display:flex; gap:12px; align-items:flex-start; margin-bottom:10px; padding:8px 10px; border-radius:8px; background:rgba(248,200,212,0.06); border-left:3px solid var(--cute-pink); }
+        .tutorial-step:last-child { margin-bottom:0; }
+        .tutorial-step-icon { font-size:22px; min-width:30px; text-align:center; line-height:1.2; margin-top:1px; }
+        .tutorial-step-content { flex:1; }
+        .tutorial-step-content h4 { margin-bottom:1px; color:#b85c7c; font-size:14px; }
+        .tutorial-step-content p { font-size:12px; color:var(--text-secondary); line-height:1.5; }
+        .tutorial-step-content .tip { font-size:11px; color:var(--gold); margin-top:2px; }
+        .tutorial-step-content code { background:#f0ebe0; padding:0 4px; border-radius:3px; font-size:11px; font-family:var(--font); color:var(--text); }
+        .tutorial-welcome { text-align:center; margin-bottom:8px; }
+        .tutorial-welcome h3 { font-size:18px; color:var(--text); font-weight:400; }
+        .tutorial-welcome p { color:var(--text-secondary); font-size:13px; margin-top:2px; }
+        .tutorial-footer { text-align:center; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+        .tutorial-footer .highlight { color:var(--gold); font-weight:600; }
+        .backup-note { background:#fff3cd; border:1px solid #ffc107; border-radius:6px; padding:8px 12px; margin-top:4px; font-size:12px; color:#856404; }
+        .backup-note code { background:#f5e6b8; padding:0 4px; border-radius:3px; font-size:11px; }
+        .import-options { display:flex; gap:8px; align-items:center; margin-top:4px; flex-wrap:wrap; }
+        .import-options label { font-size:12px; color:var(--text-secondary); cursor:pointer; }
+        .past-pools-item { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#f8f4ec; border-radius:6px; border:1px solid #e8ddce; flex-wrap:wrap; font-size:12px; }
+        .past-pools-item .name { font-weight:600; min-width:70px; }
+        .past-pools-item .meta { font-size:11px; color:var(--text-secondary); }
+        .past-pools-item .badge { margin-left:auto; }
+        .past-pools-item .past-img { width:30px; height:30px; border-radius:6px; object-fit:cover; border:1px solid var(--border); flex-shrink:0; cursor:pointer; }
+        .past-pools-item .stats { font-size:11px; color:var(--text-secondary); display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+        .past-pools-item .stats .luck-badge { font-size:10px; padding:0 6px; }
+        @media (max-width:600px) { .past-pools-item .name { min-width:50px; } .record-left { min-width:40px; max-width:50px; } .record-left .record-img { width:32px; height:32px; } }
+        .template-img-actions { display:flex; gap:6px; align-items:center; margin-top:3px; }
+        .calc-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(80px,1fr)); gap:6px; align-items:end; margin-bottom:6px; }
+        .calc-grid .form-group { margin:0; }
+        #calcModal .modal-content { max-width:520px; }
+        .img-preview-wrapper { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+        .img-preview-wrapper img { width:28px; height:28px; border-radius:6px; object-fit:cover; border:1px solid var(--border); }
+        .img-preview-wrapper .del-img-btn { background:#fdecea; border:1px solid var(--danger-border); border-radius:50%; width:20px; height:20px; font-size:11px; line-height:1; cursor:pointer; color:#c0392b; display:flex; align-items:center; justify-content:center; }
+        .img-preview-wrapper .del-img-btn:hover { background:#f5d0d0; }
+        .template-img-preview { display:flex; align-items:center; gap:8px; margin-top:3px; flex-wrap:wrap; }
+        .template-img-preview img { width:48px; height:48px; border-radius:6px; object-fit:cover; border:1px solid var(--border); }
+        .tutorial-page .page-title { font-size:17px; font-weight:500; color:var(--text); margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+        .tutorial-page .page-title .emoji { font-size:20px; }
+        .tutorial-page .page-desc { font-size:13px; color:var(--text-secondary); margin-bottom:10px; line-height:1.5; }
+        .tutorial-feature-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px; }
+        .tutorial-feature-item { background:rgba(248,200,212,0.06); border-radius:6px; padding:8px 10px; border:1px solid #f0e8e0; }
+        .tutorial-feature-item .label { font-size:12px; font-weight:500; color:var(--text); }
+        .tutorial-feature-item .desc { font-size:11px; color:var(--text-secondary); margin-top:1px; }
+        @media (max-width:500px) { .tutorial-feature-grid { grid-template-columns:1fr; } }
+        .backup-highlight { background:#fdecea; border:1px solid #f5c6cb; border-radius:6px; padding:10px; margin-bottom:8px; font-size:12px; color:#721c24; line-height:1.6; }
+        .backup-highlight strong { color:#c0392b; }
+        .backup-safe { background:#e8f5e9; border-radius:6px; padding:8px 12px; font-size:12px; color:#2e7d32; margin-top:6px; }
+        .backup-safe code { background:#c8e6c9; padding:0 4px; border-radius:3px; font-size:11px; }
+        .day-stats { display:flex; flex-wrap:wrap; gap:8px 16px; padding:6px 10px; background:rgba(245,240,230,0.5); border-radius:6px; margin-bottom:10px; font-size:13px; color:var(--text); border:1px solid #e8ddce; }
+        .day-stats span { display:inline-flex; align-items:center; gap:4px; }
+        .day-stats .stat-num { font-weight:600; color:var(--gold); }
+        .theme-options { display:flex; flex-wrap:wrap; gap:12px; margin-top:4px; }
+        .theme-group { flex:1; min-width:160px; }
+        .theme-group-title { font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:6px; }
+        .color-options { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+        .color-btn { width:30px; height:30px; border-radius:50%; border:2px solid var(--border); cursor:pointer; transition:all 0.2s; flex-shrink:0; }
+        .color-btn:hover { transform:scale(1.1); border-color:var(--gold); }
+        .color-btn.active { border-color:var(--gold); box-shadow:0 0 0 2px var(--card-bg), 0 0 0 4px var(--gold); }
+        .color-picker-input { width:32px; height:30px; border:2px solid var(--border); border-radius:var(--radius); cursor:pointer; padding:0; }
+        .theme-card .card { background:var(--card-bg); border:1px solid var(--border); }
+        .theme-card .card-title { color:var(--text-secondary); }
+        .deco-upload-area { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:4px; }
+        .deco-upload-area input[type="text"] { flex:1; min-width:120px; }
+        .deco-preview { width:60px; height:60px; border-radius:6px; object-fit:cover; border:1px solid var(--border); background:#f0ebe0; }
+        .deco-preview.hidden { display:none; }
+        .font-preview { font-size:14px; color:var(--text); padding:8px 12px; background:var(--input-bg); border-radius:var(--radius); margin-top:4px; border:1px solid var(--border); }
+        .search-result-item { padding:4px 8px; font-size:12px; border-bottom:1px solid #eee; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+        .search-result-item:hover { background:rgba(255,252,245,0.5); }
+        .search-section-title { font-weight:600; color:var(--gold); margin:6px 0 4px 0; font-size:13px; }
+        .search-empty { color:var(--text-secondary); padding:8px; font-size:13px; }
+        .search-more { color:var(--text-secondary); font-size:11px; padding:2px 8px; }
+    </style>
+</head>
+<body>
+<div id="bgLayer"></div>
+<div class="container">
+    <h1>夜幕笔记</h1>
+    <div class="nav-bar">
+        <button class="nav-btn active" data-page="page-calendar">📅 抽卡日历</button>
+        <button class="nav-btn" data-page="page-pool">🌟 池子中心</button>
+        <button class="nav-btn" data-page="page-collection">📖 图鉴</button>
+        <button class="nav-btn" data-page="page-data">⚙️ 数据管理</button>
+        <button class="nav-btn" data-page="page-theme">🎨 主题</button>
+        <button class="tutorial-trigger-btn" id="tutorialBtn">🐣 新手教程</button>
+    </div>
+
+    <!-- 抽卡日历 -->
+    <div class="page active" id="page-calendar">
+        <div class="banner-area" id="bannerArea"></div>
+        <div class="card">
+            <div class="calendar-header"><button id="prevMonthBtn">←</button><span id="currentMonthLabel">2026年6月</span><button id="nextMonthBtn">→</button></div>
+            <div class="calendar-grid" id="calendarGrid"><div class="day-name">日</div><div class="day-name">一</div><div class="day-name">二</div><div class="day-name">三</div><div class="day-name">四</div><div class="day-name">五</div><div class="day-name">六</div></div>
+            <div class="day-detail" id="dayDetail">
+                <h3 id="selectedDateTitle" style="font-size:14px;font-weight:400;margin-bottom:6px;">点击日期查看</h3>
+                <div id="dayStatsContainer"></div>
+                <div class="day-luck" id="dayLuckText"></div>
+                <div class="record-list" id="dayRecords"></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">
+                <span>📝 新增记录</span>
+                <span class="title-right" id="openCalcBtn">🧮 换算</span>
+            </div>
+            <div class="form-grid">
+                <div class="form-group"><label>日期</label><input type="date" id="recordDate"></div>
+                <div class="form-group"><label>池子</label><select id="recordPoolSelect"></select></div>
+                <div class="form-group"><label>角色名</label><input type="text" id="recordCharacter" placeholder="如：胡桃"></div>
+                <div class="form-group"><label>星级</label><select id="raritySelect"><option value="SSR">SSR</option><option value="SR">SR</option><option value="R">R</option></select></div>
+                <div class="form-group"><label>抽数</label><input type="number" id="pullsInput" value="1" min="1"></div>
+                <div class="form-group" id="upGroup"><label>结果</label><select id="upSelect"><option value="up">UP</option><option value="miss">歪</option></select></div>
+                <div class="form-group">
+                    <label>图片</label>
+                    <div class="img-preview-wrapper">
+                        <input type="file" id="imageFile" accept="image/*" style="flex:1;min-width:60px;font-size:11px;">
+                        <img id="previewImg" style="display:none;width:28px;height:28px;border-radius:6px;object-fit:cover;border:1px solid var(--border);">
+                        <button class="del-img-btn" id="deletePreviewImgBtn" style="display:none;" title="删除图片">✕</button>
+                    </div>
+                </div>
+            </div>
+            <div class="actions"><button class="btn primary" id="addBtn">确认记录</button><button class="btn danger" id="clearBtn">清空全部</button></div>
+        </div>
+    </div>
+
+    <!-- 池子中心 -->
+    <div class="page" id="page-pool">
+        <div class="card"><div class="card-title">🏆 夜幕榜</div>
+            <div id="luckRanking"><div class="rank-container" id="rankContainer"></div></div>
+        </div>
+        <div class="card">
+            <div class="card-title">⚙️ 卡池模板</div>
+            <div><select id="templateSelect"></select><button class="btn small" id="editTemplateBtn">编辑</button><button class="btn small" id="newTemplateBtn">新增</button><button class="btn small danger" id="deleteTemplateBtn">删除</button></div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:8px;"><label style="font-size:12px;">当前垫抽数</label><input type="number" id="currentPityInput" value="0" min="0" style="width:60px;"><span id="pityStatus"></span></div>
+        </div>
+        <div class="card">
+            <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" id="pastPoolsToggle">
+                <span>📜 往期池子 <span id="pastPoolsCount" style="font-size:11px;color:var(--text-secondary);font-weight:400;"></span></span>
+                <span id="pastPoolsArrow" style="font-size:14px;transition:transform 0.3s;">▼</span>
+            </div>
+            <div id="pastPoolsContent" style="display:none;margin-top:8px;">
+                <div id="pastPoolsList" style="display:flex;flex-direction:column;gap:4px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图鉴 -->
+    <div class="page" id="page-collection">
+        <div class="card">
+    <div class="card-title">📖 角色图鉴</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:12px;">
+        <select id="collectionPoolFilter"><option value="all">全部池子</option></select>
+        <select id="collectionTypeFilter">
+            <option value="all">全部类型</option>
+            <option value="limited">限定池</option>
+            <option value="standard">常驻池</option>
+        </select>
+        <select id="collectionStatusFilter"><option value="all">全部状态</option><option value="owned">已收集</option><option value="missing">未拥有</option></select>
+        <input type="text" id="collectionSearchInput" placeholder="🔍 搜索角色/池子/时间" style="flex:1;min-width:120px;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--input-bg);">
+        <button class="btn small primary" id="addCollectionItemBtn">＋ 添加</button>
+        <button class="btn small" id="syncCollectionBtn">📥 同步</button>
+        <span style="font-size:12px;">已收集 <b id="ownedCount">0</b> / <b id="totalCount">0</b></span>
+    </div>
+    <div id="collectionGridContainer" class="collection-grid"></div>
+</div>
+    </div>
+
+    <!-- 数据管理 -->
+    <div class="page" id="page-data">
+        <div class="card">
+            <div class="card-title">🔍 全局搜索</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+                <input type="text" id="globalSearchInput" placeholder="搜索角色/池子/日期/星级/UP/歪..." style="flex:1;min-width:160px;padding:6px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);background:var(--input-bg);">
+                <button class="btn small primary" id="globalSearchBtn">搜索</button>
+                <button class="btn small" id="clearGlobalSearchBtn">清除</button>
+            </div>
+            <div id="globalSearchResults" style="max-height:400px;overflow-y:auto;background:#fcf9f2;border-radius:6px;padding:4px;"></div>
+        </div>
+        <div class="card">
+            <div class="card-title">⚖️ 评价模式</div>
+            <div class="form-grid">
+                <div class="form-group"><label>评价基准</label>
+                    <select id="evalModeSelect">
+                        <option value="fixed">固定阈值（按绝对抽数）</option>
+                        <option value="relative">相对期望（与池子期望对比）</option>
+                    </select>
+                </div>
+                <div class="form-group"><button class="btn small primary" id="applyEvalModeBtn">应用</button></div>
+            </div>
+            <p style="font-size:11px;color:var(--text-secondary);margin-top:2px;">固定阈值：不看池子，直接按抽数划分欧非（推荐）。相对期望：与池子期望对比。</p>
+        </div>
+        <div class="card">
+            <div class="card-title">💾 备份与恢复</div>
+            <div class="actions">
+                <button class="btn small primary" id="exportDataBtn">📥 导出备份</button>
+                <label class="btn small" for="importFileInput">📤 导入备份</label>
+                <input type="file" id="importFileInput" accept=".json" style="display:none;">
+            </div>
+            <div class="import-options">
+                <label><input type="radio" name="importMode" value="merge" checked> 合并导入</label>
+                <label><input type="radio" name="importMode" value="overwrite"> 覆盖导入</label>
+            </div>
+            <div class="backup-note">
+                ⚠️ 数据仅保存在浏览器中，建议定期导出。<br>
+                <strong>合并导入</strong>：保留现有数据，只添加备份中不存在的记录、模板、图鉴。<br>
+                <strong>覆盖导入</strong>：完全用备份数据替换当前所有数据（谨慎使用）。<br>
+                导入后请检查 <code>"records"</code> 字段是否有内容，确保备份有效。
+            </div>
+        </div>
+    </div>
+
+    <!-- 主题页面 -->
+    <div class="page" id="page-theme">
+        <div class="card theme-card">
+            <div class="card-title">🎨 背景颜色</div>
+            <div class="theme-options">
+                <div class="theme-group">
+                    <div class="theme-group-title">预设</div>
+                    <div class="color-options" id="bgColorOptions">
+                        <button class="color-btn active" style="background:#f5f0e6;" data-color="#f5f0e6" title="奶油白"></button>
+                        <button class="color-btn" style="background:#1a1a2e;" data-color="#1a1a2e" title="暗夜蓝"></button>
+                        <button class="color-btn" style="background:#2d1b1b;" data-color="#2d1b1b" title="深褐"></button>
+                        <button class="color-btn" style="background:#1e2a3a;" data-color="#1e2a3a" title="深海"></button>
+                        <button class="color-btn" style="background:#f0e6d3;" data-color="#f0e6d3" title="米白"></button>
+                        <button class="color-btn" style="background:#e8f0e8;" data-color="#e8f0e8" title="薄荷白"></button>
+                        <button class="color-btn" style="background:#2c2c2c;" data-color="#2c2c2c" title="炭黑"></button>
+                        <button class="color-btn" style="background:#f5e6d3;" data-color="#f5e6d3" title="暖杏"></button>
+                    </div>
+                </div>
+                <div class="theme-group">
+                    <div class="theme-group-title">自定义</div>
+                    <div class="color-options">
+                        <input type="color" id="bgColorPicker" class="color-picker-input" value="#f5f0e6">
+                        <span style="font-size:12px;color:var(--text-secondary);">点击选择</span>
+                        <button class="btn small" id="resetBgColorBtn">重置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card theme-card">
+            <div class="card-title">✏️ 字体颜色</div>
+            <div class="theme-options">
+                <div class="theme-group">
+                    <div class="theme-group-title">预设</div>
+                    <div class="color-options" id="textColorOptions">
+                        <button class="color-btn active" style="background:#4a3f35;" data-color="#4a3f35" title="深褐"></button>
+                        <button class="color-btn" style="background:#1a1a1a;" data-color="#1a1a1a" title="纯黑"></button>
+                        <button class="color-btn" style="background:#5a4a32;" data-color="#5a4a32" title="暖褐"></button>
+                        <button class="color-btn" style="background:#2c3e50;" data-color="#2c3e50" title="深蓝灰"></button>
+                        <button class="color-btn" style="background:#6b4c3b;" data-color="#6b4c3b" title="咖啡"></button>
+                        <button class="color-btn" style="background:#34495e;" data-color="#34495e" title="石板蓝"></button>
+                        <button class="color-btn" style="background:#8b7a6a;" data-color="#8b7a6a" title="灰褐"></button>
+                        <button class="color-btn" style="background:#2d2d2d;" data-color="#2d2d2d" title="暗灰"></button>
+                    </div>
+                </div>
+                <div class="theme-group">
+                    <div class="theme-group-title">自定义</div>
+                    <div class="color-options">
+                        <input type="color" id="textColorPicker" class="color-picker-input" value="#4a3f35">
+                        <span style="font-size:12px;color:var(--text-secondary);">点击选择</span>
+                        <button class="btn small" id="resetTextColorBtn">重置</button>
+                    </div>
+                </div>
+            </div>
+            <div class="font-preview" id="textColorPreview">夜幕笔记 · 示例文字</div>
+        </div>
+        <div class="card theme-card">
+            <div class="card-title">🎯 UI主色调（按钮/边框/强调）</div>
+            <div class="theme-options">
+                <div class="theme-group">
+                    <div class="theme-group-title">预设</div>
+                    <div class="color-options" id="uiColorOptions">
+                        <button class="color-btn active" style="background:#b8860b;" data-color="#b8860b" title="金色"></button>
+                        <button class="color-btn" style="background:#c0392b;" data-color="#c0392b" title="朱红"></button>
+                        <button class="color-btn" style="background:#2980b9;" data-color="#2980b9" title="宝石蓝"></button>
+                        <button class="color-btn" style="background:#27ae60;" data-color="#27ae60" title="翡翠绿"></button>
+                        <button class="color-btn" style="background:#8e44ad;" data-color="#8e44ad" title="紫罗兰"></button>
+                        <button class="color-btn" style="background:#e67e22;" data-color="#e67e22" title="橙黄"></button>
+                        <button class="color-btn" style="background:#1abc9c;" data-color="#1abc9c" title="青绿"></button>
+                        <button class="color-btn" style="background:#e74c3c;" data-color="#e74c3c" title="正红"></button>
+                    </div>
+                </div>
+                <div class="theme-group">
+                    <div class="theme-group-title">自定义</div>
+                    <div class="color-options">
+                        <input type="color" id="uiColorPicker" class="color-picker-input" value="#b8860b">
+                        <span style="font-size:12px;color:var(--text-secondary);">点击选择</span>
+                        <button class="btn small" id="resetUiColorBtn">重置</button>
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">
+                <button class="btn primary" style="background:var(--gold);border-color:var(--gold);">示例按钮</button>
+                <span style="border:2px solid var(--gold);padding:4px 12px;border-radius:4px;font-size:12px;">边框</span>
+                <span style="color:var(--gold);font-weight:600;">强调色</span>
+            </div>
+        </div>
+        <div class="card theme-card">
+            <div class="card-title">🔤 字体</div>
+            <div class="form-grid" style="grid-template-columns:1fr 1fr auto;">
+                <div class="form-group"><label>选择字体</label>
+                    <select id="fontSelect">
+                        <option value="ZCOOL KuaiLe">站酷快乐体</option>
+                        <option value="ZCOOL WenYi">站酷文艺体</option>
+                        <option value="Smiley Sans">得意黑</option>
+                        <option value="LXGW WenKai">霞鹜文楷</option>
+                        <option value="custom">自定义</option>
+                    </select>
+                </div>
+                <div class="form-group" id="customFontNameGroup" style="display:none;"><label>名称</label><input type="text" id="customFontName"></div>
+                <div class="form-group" id="customFontLinkGroup" style="display:none;"><label>CDN</label><input type="text" id="customFontLink"></div>
+                <div class="form-group"><button class="btn small primary" id="applyFontBtn">应用</button></div>
+            </div>
+            <div class="font-preview" id="fontPreview">夜幕笔记 · 预览文字</div>
+        </div>
+        <div class="card theme-card">
+            <div class="card-title">🖼️ 页面装饰</div>
+            <p style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;">透明PNG角落装饰（自动去白底）</p>
+            <div class="deco-upload-area">
+                <input type="text" id="decoUrl" placeholder="图片链接" style="flex:1;min-width:120px;padding:6px 8px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--input-bg);">
+                <input type="file" id="decoFile" accept="image/*" style="font-size:12px;">
+                <select id="decoPosition" style="padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--input-bg);">
+                    <option value="bottom-right">右下</option>
+                    <option value="bottom-left">左下</option>
+                    <option value="top-right">右上</option>
+                    <option value="top-left">左上</option>
+                </select>
+                <button class="btn small primary" id="applyDecoBtn">应用</button>
+                <button class="btn small danger" id="removeDecoBtn">移除</button>
+            </div>
+            <div style="margin-top:6px;display:flex;align-items:center;gap:8px;">
+                <span style="font-size:11px;color:var(--text-secondary);">预览：</span>
+                <img id="decoPreviewImg" class="deco-preview hidden" src="" alt="装饰预览">
+            </div>
+        </div>
+    </div>
+</div>
+
+<img id="decoImage" class="deco-img deco-bottom-right" src="" alt="" style="display:none;">
+
+<!-- 弹窗 -->
+<div class="modal" id="tutorialModal"><div class="modal-content" style="max-width:580px;padding:20px;"><span class="modal-close" id="closeTutorialBtn">&times;</span><div class="tutorial-pages" id="tutorialPages">
+    <div class="tutorial-page active" data-page="0">
+        <div class="tutorial-welcome"><h3>🐣 欢迎来到夜幕笔记</h3><p>你的专属抽卡记录助手</p></div>
+        <div class="tutorial-step"><div class="tutorial-step-icon">📅</div><div class="tutorial-step-content"><h4>抽卡日历</h4><p>在日历上直观查看每天的抽卡记录，点击日期查看详情。</p><p class="tip">💡 有圆点的日期表示当天有记录，颜色代表欧非运势。</p></div></div>
+        <div class="tutorial-step"><div class="tutorial-step-icon">🌟</div><div class="tutorial-step-content"><h4>池子中心</h4><p>管理卡池模板，查看夜幕榜排名，追踪往期池子。</p><p class="tip">💡 限定池需要记录 UP 结果，常驻池记录 SSR 即可。</p></div></div>
+        <div class="tutorial-step"><div class="tutorial-step-icon">📖</div><div class="tutorial-step-content"><h4>图鉴</h4><p>自动同步你抽到的 SSR 角色，手动添加或编辑图鉴条目。</p><p class="tip">💡 图鉴数据独立于抽卡记录，可以自由管理。</p></div></div>
+        <div class="tutorial-nav"><span></span><div class="dots"><span class="active" data-page="0"></span><span data-page="1"></span><span data-page="2"></span></div><button class="btn small" data-tutorial-next>下一步 →</button></div>
+    </div>
+    <div class="tutorial-page" data-page="1">
+        <div class="page-title"><span class="emoji">📝</span> 快速上手</div>
+        <div class="page-desc">三步开始记录你的抽卡旅程</div>
+        <div class="tutorial-feature-grid">
+            <div class="tutorial-feature-item"><div class="label">① 创建池子</div><div class="desc">在「池子中心」新建模板，设置概率和保底</div></div>
+            <div class="tutorial-feature-item"><div class="label">② 记录抽卡</div><div class="desc">在「抽卡日历」选择日期，填写角色和抽数</div></div>
+            <div class="tutorial-feature-item"><div class="label">③ 查看运势</div><div class="desc">日历圆点颜色、夜幕榜、每日运势一目了然</div></div>
+            <div class="tutorial-feature-item"><div class="label">💾 数据安全</div><div class="desc">数据保存在浏览器，记得定期导出备份</div></div>
+        </div>
+        <div class="tutorial-nav"><button class="btn small" data-tutorial-prev>← 上一步</button><div class="dots"><span data-page="0"></span><span class="active" data-page="1"></span><span data-page="2"></span></div><button class="btn small" data-tutorial-next>下一步 →</button></div>
+    </div>
+    <div class="tutorial-page" data-page="2">
+        <div class="page-title"><span class="emoji">🎯</span> 进阶技巧</div>
+        <div class="page-desc">让夜幕笔记更强大</div>
+        <div class="tutorial-step"><div class="tutorial-step-icon">🧮</div><div class="tutorial-step-content"><h4>快速换算</h4><p>点击「🧮 换算」根据翻页位置计算总抽数和垫抽数，一键应用到记录。</p></div></div>
+        <div class="tutorial-step"><div class="tutorial-step-icon">🎨</div><div class="tutorial-step-content"><h4>主题定制</h4><p>自由调整背景、文字、UI颜色，甚至更换字体和角落装饰。</p></div></div>
+        <div class="tutorial-step"><div class="tutorial-step-icon">🔍</div><div class="tutorial-step-content"><h4>全局搜索</h4><p>在「数据管理」搜索角色、池子、日期、星级等所有内容。</p></div></div>
+        <div class="tutorial-footer"><span class="highlight">✨ 开始你的抽卡记录之旅吧！</span></div>
+        <div class="tutorial-nav"><button class="btn small" data-tutorial-prev>← 上一步</button><div class="dots"><span data-page="0"></span><span data-page="1"></span><span class="active" data-page="2"></span></div><button class="btn small primary" id="closeTutorialFooterBtn">开始使用 🚀</button></div>
+    </div>
+</div></div></div>
+<div class="modal" id="backupModal"><div class="modal-content"><h3 style="font-size:16px;">💾 数据备份提醒</h3><p>数据仅保存在浏览器本地，清缓存可能丢失。</p><div class="actions"><button class="btn small" id="skipBackupBtn">稍后提醒</button><button class="btn primary small" id="quickExportBtn">立即导出</button></div></div></div>
+<!-- ★ 修复：给图片模态框关闭按钮加上 id -->
+<div class="modal" id="imageModal"><span class="modal-close" id="closeImageModalBtn">&times;</span><img id="modalImage" style="max-width:85%;max-height:85%;border-radius:8px;"></div>
+<div class="modal" id="templateModal"><div class="modal-content"><h3 id="templateModalTitle" style="font-size:16px;">编辑模板</h3><div class="form-group"><label>名称</label><input type="text" id="templateNameInput"></div><div class="form-group"><label>SSR概率 (%)</label><input type="number" id="templateSsrProb" value="2" step="0.1"></div><div class="form-group"><label>小保底抽数</label><input type="number" id="templatePity" value="80"></div><div class="form-group"><label>歪的概率 (%)</label><input type="number" id="templateMissProb" value="50"></div><div class="form-group"><label>大保底需歪次数</label><input type="number" id="templateGuarantee" value="1"></div>
+                <div class="form-group"><label>开始时间</label><input type="datetime-local" id="templateStartDate"></div>
+                <div class="form-group"><label>结束时间</label><input type="datetime-local" id="templateEndDate"></div>
+<div class="form-group"><label>宣传图</label><input type="file" id="templateImageFile" accept="image/*"></div>
+<div id="templateImgPreviewContainer" style="display:none;margin-top:4px;">
+    <div class="template-img-preview">
+        <img id="templatePreviewImg" src="" alt="宣传图预览">
+        <button class="btn small danger" id="deleteTemplateImgBtn">🗑️ 删除图片</button>
+    </div>
+</div>
+<div class="form-group"><label>池子类型</label><select id="templateIsLimited"><option value="1">限定池</option><option value="0">常驻池</option></select></div><div class="actions"><button class="btn" id="cancelTemplateBtn">取消</button><button class="btn primary" id="saveTemplateBtn">保存</button></div></div></div>
+<div class="modal" id="editRecordModal"><div class="modal-content"><h3 style="font-size:16px;">编辑记录</h3><input type="hidden" id="editRecordIndex"><div class="form-group"><label>日期</label><input type="date" id="editRecordDate"></div><div class="form-group"><label>池子</label><select id="editRecordPoolSelect"></select></div><div class="form-group"><label>角色名</label><input type="text" id="editRecordCharacter" placeholder="如：胡桃"></div><div class="form-group"><label>星级</label><select id="editRaritySelect"><option value="SSR">SSR</option><option value="SR">SR</option><option value="R">R</option></select></div><div class="form-group"><label>抽数</label><input type="number" id="editPullsInput" value="1" min="1"></div><div class="form-group" id="editUpGroup"><label>结果</label><select id="editUpSelect"><option value="up">UP</option><option value="miss">歪</option></select></div><div class="form-group"><label>图片</label><input type="file" id="editImageFile"><img id="editPreviewImg" style="width:28px;height:28px;border-radius:6px;object-fit:cover;display:none;"></div><div class="actions"><button class="btn" id="cancelEditBtn">取消</button><button class="btn primary" id="saveEditBtn">保存修改</button></div></div></div>
+<div class="modal" id="collectionItemModal"><div class="modal-content"><h3 id="collectionModalTitle" style="font-size:16px;">添加图鉴</h3><div class="form-group"><label>名称</label><input type="text" id="collectionItemName"></div><div class="form-group"><label>所属池子</label><select id="collectionItemPool"></select></div><div class="form-group"><label>获取日期</label><input type="date" id="collectionAcquiredDate"></div><div class="form-group"><label>卡面图片</label><input type="file" id="collectionItemImage" accept="image/*"><img id="collectionPreviewImg" style="width:28px;height:28px;border-radius:6px;object-fit:cover;display:none;"></div><div class="actions"><button class="btn" id="cancelCollectionBtn">取消</button><button class="btn primary" id="saveCollectionBtn">保存</button></div></div></div>
+
+<!-- ★ 快速换算弹窗 -->
+<div class="modal" id="calcModal">
+    <div class="modal-content">
+        <span class="modal-close" id="closeCalcBtn">&times;</span>
+        <h3 style="margin-bottom:12px;font-size:16px;">🧮 快速换算</h3>
+        <div class="calc-grid">
+            <div class="form-group"><label>翻页方向</label><select id="calcDirection"><option value="normal">正序</option><option value="reverse">倒序</option></select></div>
+            <div class="form-group"><label>每页抽数</label><input type="number" id="calcPerPage" value="10" min="1"></div>
+            <div class="form-group"><label>出货页</label><input type="number" id="calcPage" value="1" min="1"></div>
+            <div class="form-group"><label>位置</label><input type="number" id="calcPosition" value="1" min="1"></div>
+            <div class="form-group"><label>完整页数</label><input type="number" id="calcFullPages" value="0" min="0"></div>
+            <div class="form-group"><label>零头抽数</label><input type="number" id="calcExtraPulls" value="0" min="0"></div>
+            <div class="form-group"><label>池子类型</label>
+                <select id="calcPoolType">
+                    <option value="limited">限定池</option>
+                    <option value="standard">常驻池</option>
+                </select>
+            </div>
+            <div class="form-group" id="calcLastSSRGroup" style="display:none;">
+                <label>上次SSR抽数</label>
+                <input type="number" id="calcLastSSR" value="0" min="0">
+            </div>
+            <div class="form-group" style="justify-content:flex-end;"><button class="btn small primary" id="calcBtn" style="padding:4px 12px;">计算</button></div>
+        </div>
+        <div class="actions" id="calcResult" style="display:none;margin-top:4px;gap:6px;font-size:12px;">
+            <span>📦 总抽数：<b id="calcTotalPulls">0</b></span>
+            <span>🎯 出货抽数：<b id="calcDrawPulls">0</b></span>
+            <span>📊 间隔抽数：<b id="calcIntervalPulls">-</b></span>
+            <span>📌 垫抽数：<b id="calcPityPulls">0</b></span>
+            <button class="btn small primary" id="applyCalcBtn">✅ 应用到记录</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    // ===== 基础变量 =====
+    let records=[], templates=[], currentTemplateId=null, collectionItems=[];
+    let currentMonth=new Date().getMonth(), currentYear=new Date().getFullYear();
+    let selectedDate=new Date().toISOString().slice(0,10);
+    let selectedImageData=null, editingTemplateId=null, templateImageData=null;
+    let editRecordIndex=-1, editImageData=null, editingCollectionId=null, collectionImageData=null;
+    let evalMode = localStorage.getItem('nightfall_eval_mode') || 'fixed';
+
+    const defaultTemplate={id:'default',name:'默认卡池',ssrProb:0.02,hardPity:80,missProb:0.5,guaranteeCount:1,startDate:'',endDate:'',bannerImage:'',isLimited:true};
+    const $=id=>document.getElementById(id);
+    const expectCache=new Map();
+
+    // ===== 模拟函数 =====
+    function simulateExpectUP(tmpl) {
+        const key=`${tmpl.ssrProb}_${tmpl.hardPity}_${tmpl.missProb}_${tmpl.guaranteeCount}`;
+        if(expectCache.has(key)) return expectCache.get(key);
+        let total=0; const samples=80000;
+        for(let i=0;i<samples;i++){ let pulls=0,pc=0,mc=0; while(true){ pulls++; pc++; if(pc>=tmpl.hardPity||Math.random()<tmpl.ssrProb){ if(mc>=tmpl.guaranteeCount||Math.random()>=tmpl.missProb){ total+=pulls; break }else{ mc++; pc=0 } } } }
+        const avg=total/samples; expectCache.set(key,avg); return avg;
+    }
+
+    function simulateStandardSSR(tmpl) {
+        const key=`std_${tmpl.ssrProb}_${tmpl.hardPity}`;
+        if(expectCache.has(key)) return expectCache.get(key);
+        let total=0; const samples=80000;
+        for(let i=0;i<samples;i++){ let pulls=0,pc=0; while(true){ pulls++; pc++; if(pc>=tmpl.hardPity||Math.random()<tmpl.ssrProb){ total+=pulls; break } } }
+        const avg=total/samples; expectCache.set(key,avg); return avg;
+    }
+
+    function getExpectFunc(tmpl) {
+        return tmpl.isLimited ? simulateExpectUP : simulateStandardSSR;
+    }
+
+    function evaluateLuck(avgPulls, tmpl) {
+        if (!avgPulls || avgPulls <= 0) return { text: '暂无数据', cls: 'luck-normal', dotCls: 'dot-normal' };
+        if (!tmpl.isLimited) {
+            if (avgPulls <= 30) return { text: '🎊 大吉', cls: 'luck-super-ou', dotCls: 'dot-ou-super' };
+            if (avgPulls <= 50) return { text: '✨ 吉', cls: 'luck-high-ou', dotCls: 'dot-ou-high' };
+            if (avgPulls <= 70) return { text: '🍀 中吉', cls: 'luck-low-ou', dotCls: 'dot-ou-low' };
+            if (avgPulls <= 100) return { text: '⚖️ 末吉', cls: 'luck-normal', dotCls: 'dot-normal' };
+            if (avgPulls <= 150) return { text: '🌧️ 凶', cls: 'luck-low-fei', dotCls: 'dot-fei-low' };
+            if (avgPulls <= 200) return { text: '💧 大凶', cls: 'luck-high-fei', dotCls: 'dot-fei-high' };
+            return { text: '💀 大凶', cls: 'luck-super-fei', dotCls: 'dot-fei-super' };
+        }
+        if (evalMode === 'fixed') {
+            if (avgPulls <= 30) return { text: '🎊 大吉', cls: 'luck-super-ou', dotCls: 'dot-ou-super' };
+            if (avgPulls <= 50) return { text: '✨ 吉', cls: 'luck-high-ou', dotCls: 'dot-ou-high' };
+            if (avgPulls <= 70) return { text: '🍀 中吉', cls: 'luck-low-ou', dotCls: 'dot-ou-low' };
+            if (avgPulls <= 100) return { text: '⚖️ 末吉', cls: 'luck-normal', dotCls: 'dot-normal' };
+            if (avgPulls <= 150) return { text: '🌧️ 凶', cls: 'luck-low-fei', dotCls: 'dot-fei-low' };
+            if (avgPulls <= 200) return { text: '💧 大凶', cls: 'luck-high-fei', dotCls: 'dot-fei-high' };
+            return { text: '💀 大凶', cls: 'luck-super-fei', dotCls: 'dot-fei-super' };
+        } else {
+            const expect = getExpectFunc(tmpl)(tmpl);
+            const ratio = avgPulls / expect;
+            if (ratio < 0.5) return { text: '🎊 大吉', cls: 'luck-super-ou', dotCls: 'dot-ou-super' };
+            if (ratio < 0.65) return { text: '✨ 吉', cls: 'luck-high-ou', dotCls: 'dot-ou-high' };
+            if (ratio < 0.8) return { text: '🍀 中吉', cls: 'luck-low-ou', dotCls: 'dot-ou-low' };
+            if (ratio < 1.2) return { text: '⚖️ 末吉', cls: 'luck-normal', dotCls: 'dot-normal' };
+            if (ratio < 1.5) return { text: '🌧️ 凶', cls: 'luck-low-fei', dotCls: 'dot-fei-low' };
+            if (ratio < 2.0) return { text: '💧 大凶', cls: 'luck-high-fei', dotCls: 'dot-fei-high' };
+            return { text: '💀 大凶', cls: 'luck-super-fei', dotCls: 'dot-fei-super' };
+        }
+    }
+
+    // ===== 存储 =====
+    function loadAll() {
+        const r=localStorage.getItem('nightfall_records_v13'); if(r) try{ records=JSON.parse(r) }catch(e){ records=[] }
+        const t=localStorage.getItem('nightfall_templates_v10'); if(t) try{ templates=JSON.parse(t) }catch(e){ templates=[] }
+        if(!templates.length){ templates.push({...defaultTemplate}); currentTemplateId=defaultTemplate.id }
+        else currentTemplateId=localStorage.getItem('nightfall_current_template_v10')||templates[0].id;
+        if(!templates.find(t=>t.id===currentTemplateId)) currentTemplateId=templates[0].id;
+        const p=localStorage.getItem('nightfall_current_pity_v8'); if(p) $('currentPityInput').value=p;
+        const c=localStorage.getItem('nightfall_collection_v2'); if(c) try{ collectionItems=JSON.parse(c) }catch(e){ collectionItems=[] }
+        evalMode = localStorage.getItem('nightfall_eval_mode') || 'fixed';
+        $('evalModeSelect').value = evalMode;
+        saveTemplates(); updateRecordPoolSelect(); renderBanners(); renderLuckRanking(); updatePityStatus(); loadDeco(); renderCollectionPage(); renderPastPools();
+        loadThemeSettings();
+    }
+    function saveRecords(){ localStorage.setItem('nightfall_records_v13', JSON.stringify(records)); }
+    function saveTemplates(){ localStorage.setItem('nightfall_templates_v10', JSON.stringify(templates)); localStorage.setItem('nightfall_current_template_v10', currentTemplateId); }
+    function saveCollection(){ localStorage.setItem('nightfall_collection_v2', JSON.stringify(collectionItems)); }
+    function getCurrentTemplate(){ return templates.find(t=>t.id===currentTemplateId)||templates[0] }
+    function getTemplateById(id){ return templates.find(t=>t.id===id)||getCurrentTemplate() }
+    function isPoolGraduated(tid){
+        const tmpl=getTemplateById(tid);
+        if(tmpl.isLimited) return records.some(r=>r.templateId===tid && r.rarity==='SSR' && r.up==='up');
+        else return records.some(r=>r.templateId===tid && r.rarity==='SSR');
+    }
+
+    // ===== 图鉴 =====
+    function ensureCollectionItem(character, poolId, image, date) {
+        if (!character) return;
+        const name = character.trim();
+        const existing = collectionItems.find(item => item.name.toLowerCase() === name.toLowerCase());
+        if (!existing) {
+            collectionItems.push({
+                id: 'col_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+                name: name,
+                poolId: poolId || 'default',
+                image: image || '',
+                acquiredDate: date || new Date().toISOString().slice(0,10)
+            });
+            saveCollection();
+        } else {
+            if (!existing.acquiredDate) {
+                const record = records.filter(r => r.character === name && r.rarity === 'SSR')
+                                     .sort((a,b) => a.date.localeCompare(b.date))[0];
+                if (record) {
+                    existing.acquiredDate = record.date;
+                    saveCollection();
+                }
+            }
+        }
+    }
+
+    function syncCollectionFromRecords() {
+        let count = 0;
+        records.forEach(r => {
+            if (r.rarity === 'SSR' && r.character) {
+                const name = r.character.trim();
+                const existing = collectionItems.find(item => item.name.toLowerCase() === name.toLowerCase());
+                if (!existing) {
+                    const charRecords = records.filter(rec => rec.character === name && rec.rarity === 'SSR');
+                    const earliest = charRecords.sort((a,b) => a.date.localeCompare(b.date))[0];
+                    collectionItems.push({
+                        id: 'col_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+                        name: name,
+                        poolId: r.templateId || 'default',
+                        image: r.image || '',
+                        acquiredDate: earliest ? earliest.date : new Date().toISOString().slice(0,10)
+                    });
+                    count++;
+                }
+            }
+        });
+        if (count > 0) {
+            saveCollection();
+            alert(`✅ 成功同步 ${count} 个角色到图鉴！`);
+        } else {
+            alert('📭 没有新的角色需要同步，所有SSR角色已在图鉴中。');
+        }
+        renderCollectionPage();
+    }
+
+    function updateRecordPoolSelect(){
+        ['recordPoolSelect','editRecordPoolSelect','collectionItemPool'].forEach(id=>{
+            const sel=$(id); if(!sel) return;
+            sel.innerHTML=''; templates.forEach(t=>{ const o=document.createElement('option'); o.value=t.id; o.textContent=t.name; if(t.id===currentTemplateId && id!=='collectionItemPool') o.selected=true; sel.appendChild(o) })
+        })
+    }
+
+    function compressImage(file, maxWidth=400, quality=0.6) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width, height = img.height;
+                    if (width > maxWidth) { height = (maxWidth / width) * height; width = maxWidth; }
+                    canvas.width = width; canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function showImage(src) {
+        if (!src) return;
+        const modal = document.getElementById('imageModal');
+        const img = document.getElementById('modalImage');
+        img.src = src;
+        modal.classList.add('active');
+    }
+    window.showImage = showImage;
+
+    // ★ 修复：图片模态框关闭事件使用正确元素（已添加 id）
+    document.getElementById('closeImageModalBtn').addEventListener('click', function() {
+        document.getElementById('imageModal').classList.remove('active');
+    });
+    document.getElementById('imageModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+        }
+    });
+
+    document.getElementById('deletePreviewImgBtn').addEventListener('click', function() {
+        if (confirm('确定要删除已上传的图片吗？')) {
+            selectedImageData = null;
+            document.getElementById('previewImg').style.display = 'none';
+            document.getElementById('previewImg').src = '';
+            document.getElementById('imageFile').value = '';
+            this.style.display = 'none';
+        }
+    });
+
+    document.getElementById('imageFile').addEventListener('change', async function() {
+        const f = this.files[0];
+        if (!f) { 
+            selectedImageData = null; 
+            document.getElementById('previewImg').style.display = 'none';
+            document.getElementById('deletePreviewImgBtn').style.display = 'none';
+            return; 
+        }
+        selectedImageData = await compressImage(f, 400, 0.6);
+        const img = document.getElementById('previewImg');
+        img.src = selectedImageData;
+        img.style.display = 'block';
+        document.getElementById('deletePreviewImgBtn').style.display = 'flex';
+    });
+
+    document.getElementById('deleteTemplateImgBtn').addEventListener('click', function() {
+        if (confirm('确定要删除宣传图吗？')) {
+            templateImageData = null;
+            document.getElementById('templatePreviewImg').src = '';
+            document.getElementById('templatePreviewImg').style.display = 'none';
+            document.getElementById('templateImgPreviewContainer').style.display = 'none';
+            document.getElementById('templateImageFile').value = '';
+        }
+    });
+
+    function updatePityStatus(){
+        const pity=parseInt($('currentPityInput').value)||0, ct=getCurrentTemplate(), grad=isPoolGraduated(ct.id);
+        if(grad) $('pityStatus').innerHTML='<span class="graduated-badge">🎉 已毕业</span>';
+        else{
+            const h = ct.hardPity;
+            const g = ct.guaranteeCount;
+            const remainSSR = Math.max(0, h - pity);
+            let remainUP = '--';
+            if(ct.isLimited){
+                const maxPulls = h * (g + 1);
+                remainUP = Math.max(0, maxPulls - pity);
+            }
+            $('pityStatus').innerHTML = `必出六星：<b>${remainSSR}</b> 抽` + (ct.isLimited ? `，必出目标：<b>${remainUP}</b> 抽` : '');
+        }
+        localStorage.setItem('nightfall_current_pity_v8', pity);
+    }
+    $('currentPityInput').addEventListener('input', updatePityStatus);
+
+    $('applyEvalModeBtn').addEventListener('click', ()=>{
+        evalMode = $('evalModeSelect').value;
+        localStorage.setItem('nightfall_eval_mode', evalMode);
+        renderCalendar(); showDayDetail(selectedDate); renderLuckRanking(); renderBanners(); renderPastPools();
+    });
+
+    function getDominantTemplateForDay(dayRecords) {
+        const upRecords = dayRecords.filter(r=>r.rarity==='SSR'&&r.up==='up');
+        if (upRecords.length === 0) {
+            const ssrRecords = dayRecords.filter(r=>r.rarity==='SSR');
+            if (ssrRecords.length > 0) return getTemplateById(ssrRecords[0].templateId);
+            if (dayRecords.length > 0) return getTemplateById(dayRecords[0].templateId);
+            return getCurrentTemplate();
+        }
+        const counts = {};
+        upRecords.forEach(r=>{ counts[r.templateId] = (counts[r.templateId]||0)+1; });
+        const maxId = Object.keys(counts).reduce((a,b)=>counts[a]>counts[b]?a:b);
+        return getTemplateById(maxId);
+    }
+
+    // ===== 日历 =====
+    let lastDateStr = '';
+    function renderCalendar(){
+        const now = new Date();
+        const todayStr = now.toISOString().slice(0,10);
+        $('currentMonthLabel').textContent=`${currentYear}年${currentMonth+1}月`;
+        const grid=$('calendarGrid');
+        // ★ 保留 .day-name，只移除 .day-cell
+        grid.querySelectorAll('.day-cell').forEach(c=>c.remove());
+        const firstDay=new Date(currentYear,currentMonth,1).getDay();
+        const daysInMonth=new Date(currentYear,currentMonth+1,0).getDate();
+        const prevDays=new Date(currentYear,currentMonth,0).getDate();
+        for(let i=firstDay-1;i>=0;i--){ const cell=document.createElement('div'); cell.className='day-cell other-month'; cell.textContent=prevDays-i; grid.appendChild(cell) }
+        for(let d=1; d<=daysInMonth; d++){
+            const ds=`${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const cell=document.createElement('div'); cell.className='day-cell'; cell.textContent=d; cell.dataset.date=ds;
+            if(ds===todayStr) cell.classList.add('today');
+            if(ds===selectedDate) cell.classList.add('selected');
+            const dayRecords=records.filter(r=>r.date===ds);
+            if(dayRecords.length){
+                const tmpl = getDominantTemplateForDay(dayRecords);
+                let upTotal=0, upCount=0, ssrTotal=0;
+                dayRecords.forEach(r => {
+                    if(r.rarity==='SSR'){
+                        ssrTotal++;
+                        if(r.up==='up'){
+                            upTotal += r.pulls;
+                            upCount++;
+                        }
+                    }
+                });
+                const dot=document.createElement('div'); dot.className='dot';
+                if(upCount>0){ 
+                    const avg=upTotal/upCount; 
+                    const luck=evaluateLuck(avg,tmpl); 
+                    dot.classList.add(luck.dotCls) 
+                } else if(ssrTotal>0){ 
+                    dot.classList.add('dot-miss'); 
+                } else {
+                    dot.classList.add('dot-normal');
+                }
+                cell.appendChild(dot);
+            }
+            cell.addEventListener('click', ()=>{ selectedDate=ds; $('recordDate').value=ds; renderCalendar(); showDayDetail(ds); });
+            grid.appendChild(cell);
+        }
+        const totalCells=firstDay+daysInMonth; const rem=7-(totalCells%7);
+        if(rem<7) for(let d=1; d<=rem; d++){ const cell=document.createElement('div'); cell.className='day-cell other-month'; cell.textContent=d; grid.appendChild(cell) }
+        if(lastDateStr !== todayStr){ lastDateStr = todayStr; }
+    }
+
+    setInterval(()=>{
+        const now = new Date();
+        const todayStr = now.toISOString().slice(0,10);
+        if(lastDateStr !== todayStr){
+            lastDateStr = todayStr;
+            if(currentYear === now.getFullYear() && currentMonth === now.getMonth()){
+                renderCalendar();
+                if(selectedDate === todayStr) showDayDetail(todayStr);
+            }
+            renderBanners();
+            renderPastPools();
+        }
+    }, 60000);
+
+    function showDayDetail(ds){
+        $('selectedDateTitle').textContent=ds;
+        const dayData=records.filter(r=>r.date===ds);
+        const statsContainer = document.getElementById('dayStatsContainer');
+        const calcStats = JSON.parse(localStorage.getItem('nightfall_calc_stats') || '{}');
+        const calcTotal = calcStats[ds] || 0;
+        
+        let maxPull = 0;
+        let upCount = 0;
+        let upTotalPulls = 0;
+        dayData.forEach(r => {
+            if (r.pulls > maxPull) maxPull = r.pulls;
+            if(r.rarity === 'SSR' && r.up === 'up'){
+                upCount++;
+                upTotalPulls += r.pulls;
+            }
+        });
+        const totalPulls = Math.max(maxPull, calcTotal);
+        
+        if(dayData.length > 0 || calcTotal > 0){
+            const avgUp = upCount > 0 ? (upTotalPulls / upCount).toFixed(1) : '-';
+            statsContainer.innerHTML = `
+                <div class="day-stats">
+                    <span>📊 总抽数：<span class="stat-num">${totalPulls}</span></span>
+                    <span>🎯 UP次数：<span class="stat-num">${upCount}</span></span>
+                    <span>💰 UP总花费：<span class="stat-num">${upTotalPulls > 0 ? upTotalPulls : '-'}</span> 抽</span>
+                    <span>📈 平均UP：<span class="stat-num">${avgUp}</span> 抽</span>
+                    ${calcTotal > 0 && dayData.length === 0 ? '<span style="font-size:11px;color:var(--text-secondary);">📌 来自快速换算</span>' : ''}
+                </div>
+            `;
+        } else {
+            statsContainer.innerHTML = '';
+        }
+
+        if(!dayData.length){ 
+            $('dayLuckText').textContent='这一天还没有记录。'; 
+            $('dayRecords').innerHTML=''; 
+            return; 
+        }
+        const tmpl = getDominantTemplateForDay(dayData);
+        let upTotal=0, upCount2=0;
+        dayData.forEach(r => {
+            if(r.rarity==='SSR' && r.up==='up'){
+                upTotal += r.pulls;
+                upCount2++;
+            }
+        });
+        let luckHtml='';
+        if(upCount2>0){
+            const avg = upTotal/upCount2;
+            const luck = evaluateLuck(avg, tmpl);
+            const label = tmpl.isLimited ? '平均UP' : '平均SSR';
+            const expect = getExpectFunc(tmpl)(tmpl);
+            luckHtml = `<span class="luck-badge ${luck.cls}">${luck.text}</span> (${label} ${expect.toFixed(1)} 抽，你花了 ${avg.toFixed(1)} 抽)`;
+        } else {
+            luckHtml = '<span class="luck-badge luck-normal">记录中（无UP）</span>';
+        }
+        $('dayLuckText').innerHTML=luckHtml;
+        $('dayRecords').innerHTML=dayData.map(r=>{
+            const idx=records.indexOf(r), cls=r.rarity==='SSR'?'ssr-tag':(r.rarity==='SR'?'sr-tag':'r-tag');
+            const upHtml=r.rarity==='SSR'?(r.up==='up'?'<span class="up-tag result-tag">UP</span>':'<span class="miss-tag result-tag">歪</span>'):'';
+            const imgHtml=r.image ? `<img src="${r.image}" class="record-img" onclick="showImage('${r.image}')">` : '';
+            const charName = r.character ? r.character : '';
+            const pool=templates.find(t=>t.id===r.templateId); const pn=pool?pool.name:'未知';
+            return `
+                <div class="record-item">
+                    <div class="record-left">
+                        ${imgHtml}
+                        <span class="char-name">${charName}</span>
+                    </div>
+                    <div class="record-middle">
+                        <span class="pool-name">${pn}</span>
+                        <span class="pull-count">${r.pulls}抽</span>
+                        <span class="star-tag ${cls}">${r.rarity}</span>
+                        ${upHtml}
+                    </div>
+                    <div class="record-actions">
+                        <button onclick="editRecord(${idx})" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:13px;padding:2px;">✏️</button>
+                        <button class="delete-btn" onclick="deleteRecord(${idx})" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:13px;padding:2px;">🗑️</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    window.editRecord=function(idx){
+        const rec=records[idx]; if(!rec) return;
+        editRecordIndex=idx;
+        $('editRecordDate').value=rec.date;
+        $('editRecordPoolSelect').value=rec.templateId||'default';
+        $('editRecordCharacter').value=rec.character||'';
+        $('editRaritySelect').value=rec.rarity;
+        const poolTpl = templates.find(t => t.id === $('editRecordPoolSelect').value);
+        $('editUpGroup').style.display = (poolTpl && poolTpl.isLimited && rec.rarity === 'SSR') ? 'flex' : 'none';
+        $('editPullsInput').value=rec.pulls;
+        if(rec.rarity==='SSR'){ $('editUpSelect').value=rec.up||'up'; $('editUpGroup').style.display='flex' } else $('editUpGroup').style.display='none';
+        editImageData=rec.image||null;
+        if(editImageData){ $('editPreviewImg').src=editImageData; $('editPreviewImg').style.display='block' } else $('editPreviewImg').style.display='none';
+        $('editImageFile').value=''; $('editRecordModal').classList.add('active');
+    };
+    window.deleteRecord=function(idx){
+        if(confirm('确定删除这条记录？')){ 
+            const rec = records[idx];
+            const pool = getTemplateById(rec.templateId);
+            if(pool && !pool.isLimited && rec.rarity === 'SSR'){
+                document.getElementById('currentPityInput').value = 0;
+                updatePityStatus();
+                localStorage.setItem('nightfall_current_pity_v8', '0');
+                alert('⚠️ 已删除常驻池SSR记录，垫抽数已重置为0，请根据实际情况手动调整。');
+            }
+            records.splice(idx,1); 
+           saveRecords();
+const date = selectedDate;
+const stats = JSON.parse(localStorage.getItem('nightfall_calc_stats') || '{}');
+if (!(date in stats)) {
+    const dayRecords = records.filter(r => r.date === date);
+    let maxPull = 0;
+    dayRecords.forEach(r => { if (r.pulls > maxPull) maxPull = r.pulls; });
+    if (maxPull > 0) stats[date] = maxPull;
+    else delete stats[date];
+    localStorage.setItem('nightfall_calc_stats', JSON.stringify(stats));
+}
+            renderCalendar(); 
+            showDayDetail(selectedDate); 
+            renderLuckRanking(); 
+            renderSearchResults(); 
+            updatePityStatus(); 
+            renderBanners(); 
+            renderCollectionPage(); 
+            renderPastPools(); 
+        }
+    };
+
+    $('editRaritySelect').addEventListener('change', function(){
+        const poolTpl = templates.find(t => t.id === $('editRecordPoolSelect').value);
+        $('editUpGroup').style.display = (poolTpl && poolTpl.isLimited && this.value === 'SSR') ? 'flex' : 'none';
+    });
+    $('editRecordPoolSelect').addEventListener('change', function(){
+        const poolTpl = templates.find(t => t.id === this.value);
+        $('editUpGroup').style.display = (poolTpl && poolTpl.isLimited && $('editRaritySelect').value === 'SSR') ? 'flex' : 'none';
+    });
+
+    $('editImageFile').addEventListener('change', async function() {
+        const f = this.files[0];
+        if (!f) { editImageData = null; $('editPreviewImg').style.display = 'none'; return; }
+        editImageData = await compressImage(f, 400, 0.6);
+        $('editPreviewImg').src = editImageData;
+        $('editPreviewImg').style.display = 'block';
+    });
+    $('saveEditBtn').addEventListener('click', ()=>{
+        if(editRecordIndex<0||editRecordIndex>=records.length) return;
+        if(!confirm('保存修改？')) return;
+        const rec=records[editRecordIndex];
+        const oldDate = rec.date;
+        rec.date=$('editRecordDate').value;
+        rec.templateId=$('editRecordPoolSelect').value;
+        rec.character=$('editRecordCharacter').value.trim() || '';
+        rec.rarity=$('editRaritySelect').value;
+        rec.pulls=parseInt($('editPullsInput').value)||1;
+        if(rec.rarity==='SSR') rec.up=$('editUpSelect').value; else delete rec.up;
+        if(editImageData) rec.image=editImageData;
+        if(rec.rarity === 'SSR' && rec.character) {
+            ensureCollectionItem(rec.character, rec.templateId, rec.image || '', rec.date);
+        }
+        saveRecords();
+        const date = rec.date;
+        const stats = JSON.parse(localStorage.getItem('nightfall_calc_stats') || '{}');
+        if (!(date in stats)) {
+            const dayRecords = records.filter(r => r.date === date);
+            let maxPull = 0;
+            dayRecords.forEach(r => { if (r.pulls > maxPull) maxPull = r.pulls; });
+            if (maxPull > 0) stats[date] = maxPull;
+            else delete stats[date];
+            localStorage.setItem('nightfall_calc_stats', JSON.stringify(stats));
+        }
+        if (oldDate !== date) {
+            const oldDayRecords = records.filter(r => r.date === oldDate);
+            if (oldDayRecords.length === 0) {
+                delete stats[oldDate];
+                localStorage.setItem('nightfall_calc_stats', JSON.stringify(stats));
+            }
+        }
+        $('editRecordModal').classList.remove('active');
+        renderCalendar(); showDayDetail(selectedDate); renderLuckRanking(); renderSearchResults(); updatePityStatus(); renderBanners(); renderCollectionPage(); renderPastPools();
+    });
+    $('cancelEditBtn').addEventListener('click', ()=> $('editRecordModal').classList.remove('active'));
+
+    // ===== 新增记录 =====
+    function addRecord(){
+        const date=$('recordDate').value; if(!date){ alert('请选择日期'); return; }
+        const poolId=$('recordPoolSelect').value;
+        const character=$('recordCharacter').value.trim() || '';
+        const rarity=$('raritySelect').value;
+        const pulls=parseInt($('pullsInput').value);
+        if(isNaN(pulls)||pulls<1){ alert('抽数至少为1'); return; }
+        const up = (rarity==='SSR') ? $('upSelect').value : null;
+        const record = {date, character, rarity, pulls, up, image:selectedImageData||null, templateId:poolId};
+        records.push(record);
+        if(rarity === 'SSR' && character) {
+            ensureCollectionItem(character, poolId, selectedImageData || '', date);
+        }
+        const pool = getTemplateById(poolId);
+        if(pool && !pool.isLimited && rarity === 'SSR'){
+            document.getElementById('currentPityInput').value = 0;
+            updatePityStatus();
+            localStorage.setItem('nightfall_current_pity_v8', '0');
+            setTimeout(() => {
+                alert('🎉 常驻池出 SSR！垫抽数已自动归零，保底重新计算。');
+            }, 100);
+        }
+        saveRecords();
+        const stats = JSON.parse(localStorage.getItem('nightfall_calc_stats') || '{}');
+        if (!(date in stats)) {
+            const dayRecords = records.filter(r => r.date === date);
+            let maxPull = 0;
+            dayRecords.forEach(r => { if (r.pulls > maxPull) maxPull = r.pulls; });
+            if (maxPull > 0) stats[date] = maxPull;
+            else delete stats[date];
+            localStorage.setItem('nightfall_calc_stats', JSON.stringify(stats));
+        }
+        $('pullsInput').value='1';
+        $('raritySelect').value='SSR';
+        $('upSelect').value='up';
+        $('upGroup').style.display='flex';
+        $('imageFile').value=''; selectedImageData=null; 
+        $('previewImg').style.display='none'; 
+        $('previewImg').src='';
+        $('deletePreviewImgBtn').style.display='none';
+        $('recordCharacter').value='';
+        if(date!==selectedDate){ selectedDate=date; $('recordDate').value=date; }
+        renderCalendar(); showDayDetail(selectedDate); updatePityStatus(); renderLuckRanking(); renderSearchResults(); renderBanners(); renderCollectionPage(); renderPastPools();
+    }
+    $('addBtn').addEventListener('click', addRecord);
+    $('clearBtn').addEventListener('click', ()=>{
+        if(confirm('⚠️ 确定清空所有记录？此操作不可撤销！')){ 
+            records=[]; 
+            saveRecords(); 
+            localStorage.removeItem('nightfall_calc_stats');
+            renderCalendar(); 
+            showDayDetail(selectedDate); 
+            renderLuckRanking(); 
+            renderSearchResults(); 
+            updatePityStatus(); 
+            renderBanners(); 
+            renderCollectionPage(); 
+            renderPastPools(); 
+        }
+    });
+
+    $('raritySelect').addEventListener('change', function(){
+        const poolTpl = templates.find(t => t.id === $('recordPoolSelect').value);
+        $('upGroup').style.display = (poolTpl && poolTpl.isLimited && this.value === 'SSR') ? 'flex' : 'none';
+    });
+    $('recordPoolSelect').addEventListener('change', function(){
+        const poolTpl = templates.find(t => t.id === this.value);
+        $('upGroup').style.display = (poolTpl && poolTpl.isLimited && $('raritySelect').value === 'SSR') ? 'flex' : 'none';
+    });
+
+    // ===== 夜幕榜 =====
+    function renderLuckRanking(){
+        const container = document.getElementById('rankContainer');
+        if (!container) return;
+        if (!records.length) {
+            container.innerHTML = '<div class="rank-empty">暂无数据</div>';
+            return;
+        }
+        const normalRecords = records.filter(r => {
+            const pool = getTemplateById(r.templateId);
+            return pool && !pool.isLimited && r.rarity === 'SSR';
+        });
+        let normalHtml = '';
+        if (normalRecords.length) {
+            const charStats = {};
+            normalRecords.forEach(r => {
+                const name = r.character || '未命名';
+                if (!charStats[name]) charStats[name] = { pulls: 0, count: 0 };
+                charStats[name].pulls += r.pulls;
+                charStats[name].count++;
+            });
+            const charList = Object.entries(charStats).map(([name, stats]) => ({
+                name,
+                avg: stats.pulls / stats.count,
+                count: stats.count
+            })).sort((a, b) => a.avg - b.avg);
+            const normalPools = templates.filter(t => !t.isLimited);
+            let avgExpect = 62.5;
+            if (normalPools.length) {
+                let sum = 0;
+                normalPools.forEach(p => { sum += getExpectFunc(p)(p); });
+                avgExpect = sum / normalPools.length;
+            }
+            normalHtml = `<div class="rank-section"><div class="rank-section-title">🌟 常驻榜（按角色）</div><div class="rank-list">`;
+            charList.forEach((item, idx) => {
+                const ratio = item.avg / avgExpect;
+                const luck = evaluateLuck(item.avg, normalPools[0] || {isLimited:false, ssrProb:0.02, hardPity:80});
+                const width = Math.min(100, (ratio * 50).toFixed(1));
+                normalHtml += `
+                    <div class="rank-item">
+                        <div class="rank-num">${idx+1}</div>
+                        <div class="rank-pool">${item.name} <span style="font-size:10px;color:var(--text-secondary);">(${item.count}次)</span></div>
+                        <div class="rank-luck"><span class="luck-badge ${luck.cls}">${luck.text}</span> ${item.avg.toFixed(1)}抽</div>
+                        <div class="rank-bar"><div class="rank-fill" style="width:${width}%"></div></div>
+                    </div>
+                `;
+            });
+            normalHtml += '</div></div>';
+        } else {
+            normalHtml = '<div class="rank-section"><div class="rank-section-title">🌟 常驻榜（按角色）</div><div class="rank-empty">暂无常驻SSR记录</div></div>';
+        }
+        const limitedRecords = records.filter(r => {
+            const pool = getTemplateById(r.templateId);
+            return pool && pool.isLimited && r.rarity === 'SSR' && r.up === 'up';
+        });
+        let limitedHtml = '';
+        if (limitedRecords.length) {
+            const poolStats = {};
+            limitedRecords.forEach(r => {
+                const tid = r.templateId;
+                if (!poolStats[tid]) poolStats[tid] = { pulls: 0, count: 0, pool: getTemplateById(tid) };
+                poolStats[tid].pulls += r.pulls;
+                poolStats[tid].count++;
+            });
+            const poolList = Object.values(poolStats).map(item => {
+                const avg = item.pulls / item.count;
+                const expect = getExpectFunc(item.pool)(item.pool);
+                return {
+                    name: item.pool.name,
+                    avg: avg,
+                    ratio: avg / expect,
+                    pool: item.pool,
+                    count: item.count
+                };
+            }).sort((a, b) => a.ratio - b.ratio);
+            limitedHtml = `<div class="rank-section"><div class="rank-section-title">🌈 限定榜（按池子）</div><div class="rank-list">`;
+            poolList.forEach((item, idx) => {
+                const luck = evaluateLuck(item.avg, item.pool);
+                const width = Math.min(100, (item.ratio * 50).toFixed(1));
+                limitedHtml += `
+                    <div class="rank-item">
+                        <div class="rank-num">${idx+1}</div>
+                        <div class="rank-pool">${item.name} <span style="font-size:10px;color:var(--text-secondary);">(${item.count}次UP)</span></div>
+                        <div class="rank-luck"><span class="luck-badge ${luck.cls}">${luck.text}</span> ${item.avg.toFixed(1)}抽</div>
+                        <div class="rank-bar"><div class="rank-fill" style="width:${width}%"></div></div>
+                    </div>
+                `;
+            });
+            limitedHtml += '</div></div>';
+        } else {
+            limitedHtml = '<div class="rank-section"><div class="rank-section-title">🌈 限定榜（按池子）</div><div class="rank-empty">暂无限定UP记录</div></div>';
+        }
+        container.innerHTML = normalHtml + limitedHtml;
+    }
+
+    // ===== ★ 修复：全局搜索（数据管理页面使用） =====
+    function globalSearch(keyword) {
+        const q = keyword.trim().toLowerCase();
+        const resultsContainer = document.getElementById('globalSearchResults');
+        if (!resultsContainer) return;
+        if (!q) {
+            resultsContainer.innerHTML = '<div class="search-empty">输入关键词开始搜索</div>';
+            return;
+        }
+        let html = '';
+        let hasResult = false;
+        const recordMatches = records.filter(r => {
+            const pool = templates.find(t => t.id === r.templateId);
+            const poolName = pool?.name || '';
+            const charName = r.character || '';
+            const rarity = r.rarity || '';
+            const result = r.up || '';
+            const date = r.date || '';
+            return poolName.toLowerCase().includes(q) 
+                || charName.toLowerCase().includes(q)
+                || date.includes(q)
+                || rarity.toLowerCase().includes(q)
+                || result.toLowerCase().includes(q);
+        });
+        if (recordMatches.length) {
+            hasResult = true;
+            html += `<div class="search-section-title">📝 抽卡记录 (${recordMatches.length})</div>`;
+            recordMatches.slice(0, 20).forEach(r => {
+                const idx = records.indexOf(r);
+                const cls = r.rarity === 'SSR' ? 'ssr-tag' : (r.rarity === 'SR' ? 'sr-tag' : 'r-tag');
+                const upHtml = r.rarity === 'SSR' ? (r.up === 'up' ? '<span class="up-tag result-tag">UP</span>' : '<span class="miss-tag result-tag">歪</span>') : '';
+                const pool = templates.find(t => t.id === r.templateId);
+                const charName = r.character || '';
+                html += `
+                    <div class="search-result-item">
+                        <span class="${cls}">${r.rarity}${charName ? ' '+charName : ''}</span>
+                        <span style="flex:1;">${pool?.name||'未知'} · ${r.pulls}抽</span>
+                        <span style="color:var(--text-secondary);font-size:11px;">${r.date}</span>
+                        ${upHtml}
+                        <button onclick="editRecord(${idx})" style="background:none;border:none;cursor:pointer;">✏️</button>
+                    </div>
+                `;
+            });
+            if (recordMatches.length > 20) html += `<div class="search-more">...还有 ${recordMatches.length - 20} 条</div>`;
+        }
+        const ownedNames = new Set();
+        records.forEach(r => { if (r.rarity === 'SSR' && r.character) ownedNames.add(r.character.trim()); });
+        const collectionMatches = collectionItems.filter(item => {
+            const pool = templates.find(t => t.id === item.poolId) || { name: '未知', startDate: '', endDate: '' };
+            const nameMatch = item.name.toLowerCase().includes(q);
+            const poolMatch = pool.name.toLowerCase().includes(q);
+            const acquiredMatch = item.acquiredDate ? item.acquiredDate.includes(q) : false;
+            const activityMatch = (pool.startDate + ' ~ ' + pool.endDate).toLowerCase().includes(q);
+            return nameMatch || poolMatch || acquiredMatch || activityMatch;
+        });
+        if (collectionMatches.length) {
+            hasResult = true;
+            html += `<div class="search-section-title">📖 图鉴 (${collectionMatches.length})</div>`;
+            collectionMatches.slice(0, 20).forEach(item => {
+                const pool = templates.find(t => t.id === item.poolId) || { name: '未知' };
+                const isOwned = ownedNames.has(item.name.trim());
+                const status = isOwned ? '✅' : '❌';
+                html += `
+                    <div class="search-result-item">
+                        <span>${status}</span>
+                        <span style="font-weight:500;">${item.name}</span>
+                        <span style="color:var(--text-secondary);">${pool.name}</span>
+                        <span style="color:var(--text-secondary);font-size:10px;">获取: ${item.acquiredDate||'未知'}</span>
+                        <button onclick="editCollectionItem('${item.id}')" style="background:none;border:none;cursor:pointer;font-size:12px;">✏️</button>
+                    </div>
+                `;
+            });
+            if (collectionMatches.length > 20) html += `<div class="search-more">...还有 ${collectionMatches.length - 20} 条</div>`;
+        }
+        const poolMatches = templates.filter(t => {
+            const nameMatch = t.name.toLowerCase().includes(q);
+            const dateMatch = (t.startDate || '').includes(q) || (t.endDate || '').includes(q);
+            return nameMatch || dateMatch;
+        });
+        if (poolMatches.length) {
+            hasResult = true;
+            html += `<div class="search-section-title">🏆 夜幕榜 (${poolMatches.length})</div>`;
+            poolMatches.slice(0, 15).forEach(pool => {
+                const isLimited = pool.isLimited ? '限定' : '常驻';
+                const grad = isPoolGraduated(pool.id);
+                const status = grad ? '🎉 已毕业' : '进行中';
+                html += `
+                    <div class="search-result-item">
+                        <span style="font-weight:500;">${pool.name}</span>
+                        <span style="color:var(--text-secondary);font-size:10px;">${isLimited}</span>
+                        <span style="font-size:10px;color:var(--gold);">${status}</span>
+                        <span style="color:var(--text-secondary);font-size:10px;">SSR ${(pool.ssrProb*100).toFixed(1)}%</span>
+                    </div>
+                `;
+            });
+        }
+        const now = new Date().getTime();
+        const pastPools = templates.filter(t => {
+            if (!t.endDate) return false;
+            const end = new Date(t.endDate).getTime();
+            return end < now;
+        });
+        const pastMatches = pastPools.filter(t => {
+            const nameMatch = t.name.toLowerCase().includes(q);
+            const dateMatch = (t.startDate || '').includes(q) || (t.endDate || '').includes(q);
+            return nameMatch || dateMatch;
+        });
+        if (pastMatches.length) {
+            hasResult = true;
+            html += `<div class="search-section-title">📜 往期池子 (${pastMatches.length})</div>`;
+            pastMatches.slice(0, 15).forEach(pool => {
+                const grad = isPoolGraduated(pool.id);
+                const status = grad ? '🎉 已毕业' : '未毕业';
+                const dateRange = `${pool.startDate ? pool.startDate.slice(0,10) : '未知'} ~ ${pool.endDate ? pool.endDate.slice(0,10) : '未知'}`;
+                html += `
+                    <div class="search-result-item">
+                        <span style="font-weight:500;">${pool.name}</span>
+                        <span style="color:var(--text-secondary);font-size:10px;">${dateRange}</span>
+                        <span style="font-size:10px;color:${grad ? 'var(--gold)' : 'var(--text-secondary)'};">${status}</span>
+                    </div>
+                `;
+            });
+        }
+        if (!hasResult) {
+            resultsContainer.innerHTML = `<div class="search-empty">🔍 没有找到与 "<b>${q}</b>" 相关的内容</div>`;
+            return;
+        }
+        resultsContainer.innerHTML = html;
+    }
+
+    // ★ 修复：renderSearchResults 不再使用不存在的元素，改为调用 globalSearch
+    function renderSearchResults() {
+        const input = document.getElementById('globalSearchInput');
+        const results = document.getElementById('globalSearchResults');
+        if (!input || !results) return;
+        const q = input.value.trim();
+        if (!q) {
+            results.innerHTML = '<div class="search-empty">输入关键词开始搜索</div>';
+            return;
+        }
+        globalSearch(q);
+    }
+
+    document.getElementById('globalSearchBtn').addEventListener('click', function() {
+        globalSearch(document.getElementById('globalSearchInput').value);
+    });
+    document.getElementById('globalSearchInput').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            globalSearch(this.value);
+        }
+    });
+    document.getElementById('clearGlobalSearchBtn').addEventListener('click', function() {
+        document.getElementById('globalSearchInput').value = '';
+        document.getElementById('globalSearchResults').innerHTML = '<div class="search-empty">输入关键词开始搜索</div>';
+    });
+
+    // ===== 横幅 =====
+    function renderBanners(){
+        $('bannerArea').innerHTML='';
+        const now = new Date();
+        const nowTime = now.getTime();
+
+        const activeTemplates = templates.filter(tmpl => {
+            if(!tmpl.startDate || !tmpl.endDate) return false;
+            const start = new Date(tmpl.startDate).getTime();
+            const end = new Date(tmpl.endDate).getTime();
+            return (nowTime >= start && nowTime <= end) || (nowTime < start && (start - nowTime) <= 7*24*60*60*1000);
+        });
+
+        activeTemplates.forEach(tmpl => {
+            const start = new Date(tmpl.startDate).getTime();
+            const end = new Date(tmpl.endDate).getTime();
+            const isActive = (nowTime >= start && nowTime <= end);
+            const grad = isPoolGraduated(tmpl.id);
+            let timeMsg = '';
+            let cardClass = 'banner-card';
+            if(isActive){
+                const remain = end - nowTime;
+                if(remain <= 0){ timeMsg = '⏰ 已结束'; cardClass += ' ending-final'; }
+                else if(remain < 3*24*60*60*1000){ cardClass += ' ending-soon'; }
+                const days = Math.floor(remain / (24*60*60*1000));
+                const hours = Math.floor((remain % (24*60*60*1000)) / (60*60*1000));
+                const mins = Math.floor((remain % (60*60*1000)) / (60*1000));
+                timeMsg = `⏳ 剩余 ${days}天 ${hours}小时 ${mins}分钟`;
+            } else {
+                const wait = start - nowTime;
+                const days = Math.floor(wait / (24*60*60*1000));
+                const hours = Math.floor((wait % (24*60*60*1000)) / (60*60*1000));
+                const mins = Math.floor((wait % (60*60*1000)) / (60*1000));
+                timeMsg = `🔜 即将开始（${days}天 ${hours}小时 ${mins}分钟后）`;
+                cardClass += ' ending-soon';
+            }
+
+            let status = '';
+            const pity = parseInt($('currentPityInput').value)||0;
+            if(grad){
+                status = '<span class="graduated-badge">🎉 已毕业</span>';
+            } else {
+                const h = tmpl.hardPity;
+                const g = tmpl.guaranteeCount;
+                const remainSSR = Math.max(0, h - pity);
+                let remainUP = '--';
+                if(tmpl.isLimited){
+                    const maxPulls = h * (g + 1);
+                    remainUP = Math.max(0, maxPulls - pity);
+                }
+                status = `必出六星：<b>${remainSSR}</b> 抽` + (tmpl.isLimited ? `，必出目标：<b>${remainUP}</b> 抽` : '');
+            }
+
+            const card = document.createElement('div');
+            card.className = cardClass;
+            card.innerHTML = `
+                ${tmpl.bannerImage ? `<img class="banner-img" src="${tmpl.bannerImage}" onclick="showImage('${tmpl.bannerImage}')">` : ''}
+                <div class="banner-info">
+                    <div class="banner-name">${tmpl.name}</div>
+                    <div class="banner-meta">
+                        <span>${timeMsg}</span>
+                        <span>${status}</span>
+                        <span style="font-size:10px;color:var(--text-secondary);">${tmpl.startDate.replace('T',' ')} ~ ${tmpl.endDate.replace('T',' ')}</span>
+                    </div>
+                </div>
+                <button class="banner-close">×</button>
+            `;
+            card.querySelector('.banner-close').addEventListener('click', ()=> card.remove());
+            $('bannerArea').appendChild(card);
+        });
+    }
+
+    // ===== 往期池子 =====
+    function renderPastPools() {
+        const now = new Date().getTime();
+        const pastPools = templates.filter(t => {
+            if (!t.endDate) return false;
+            const end = new Date(t.endDate).getTime();
+            return end < now;
+        });
+
+        const countEl = document.getElementById('pastPoolsCount');
+        const listEl = document.getElementById('pastPoolsList');
+        if (!countEl || !listEl) return;
+        
+        if (pastPools.length === 0) {
+            countEl.textContent = '(暂无)';
+            listEl.innerHTML = '<div style="color:var(--text-secondary);font-size:12px;padding:6px 0;">还没有已结束的池子，等待活动结束吧～</div>';
+            return;
+        }
+
+        countEl.textContent = `(${pastPools.length}个)`;
+
+        const stats = {};
+        records.forEach(r => {
+            const tid = r.templateId || 'unknown';
+            if (!stats[tid]) stats[tid] = { pulls: 0, ssr: 0, up: 0, upSum: 0, miss: 0 };
+            stats[tid].pulls += r.pulls;
+            if (r.rarity === 'SSR') {
+                stats[tid].ssr++;
+                if (r.up === 'up') {
+                    stats[tid].up++;
+                    stats[tid].upSum += r.pulls;
+                } else {
+                    stats[tid].miss++;
+                }
+            }
+        });
+
+        listEl.innerHTML = pastPools.map(t => {
+            const s = stats[t.id] || { pulls: 0, ssr: 0, up: 0, upSum: 0, miss: 0 };
+            const grad = isPoolGraduated(t.id);
+            const gradText = grad ? '<span class="graduated-badge">🎉 已毕业</span>' : '<span style="color:var(--text-secondary);font-size:11px;">未毕业</span>';
+            
+            let avg = '-', luck = { text: '暂无数据', cls: 'luck-normal' };
+            if (t.isLimited) {
+                if (s.up > 0) {
+                    avg = (s.upSum / s.up).toFixed(1);
+                    luck = evaluateLuck(s.upSum / s.up, t);
+                }
+            } else {
+                if (s.ssr > 0) {
+                    avg = (s.pulls / s.ssr).toFixed(1);
+                    luck = evaluateLuck(s.pulls / s.ssr, t);
+                }
+            }
+            const label = t.isLimited ? '平均UP' : '平均SSR';
+            
+            const start = t.startDate ? t.startDate.replace('T', ' ').slice(0,16) : '未知';
+            const end = t.endDate ? t.endDate.replace('T', ' ').slice(0,16) : '未知';
+            const prob = (t.ssrProb * 100).toFixed(2) + '%';
+            
+            return `
+                <div class="past-pools-item">
+                    ${t.bannerImage ? `<img class="past-img" src="${t.bannerImage}" onclick="showImage('${t.bannerImage}')">` : ''}
+                    <span class="name">${t.name}</span>
+                    <span class="meta">${start} ~ ${end}</span>
+                    <span class="meta">SSR ${prob} | 保底 ${t.hardPity}</span>
+                    <div class="stats">
+                        <span>总抽 ${s.pulls}</span>
+                        <span>SSR ${s.ssr}</span>
+                        ${t.isLimited ? `<span>UP ${s.up}</span>` : ''}
+                        ${t.isLimited ? `<span style="color:#999;">歪 ${s.miss}</span>` : ''}
+                        <span>${label} ${avg}</span>
+                        <span class="luck-badge ${luck.cls}">${luck.text}</span>
+                    </div>
+                    ${gradText}
+                    <span style="font-size:10px;color:var(--text-secondary);">${t.isLimited ? '限定' : '常驻'}</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    document.addEventListener('click', function(e) {
+        const toggle = document.getElementById('pastPoolsToggle');
+        const content = document.getElementById('pastPoolsContent');
+        const arrow = document.getElementById('pastPoolsArrow');
+        if (!toggle || !content || !arrow) return;
+        if (toggle.contains(e.target)) {
+            const isHidden = content.style.display === 'none';
+            content.style.display = isHidden ? 'block' : 'none';
+            arrow.textContent = isHidden ? '▲' : '▼';
+        }
+    });
+
+    // ===== 图鉴页面 =====
+  function renderCollectionPage() {
+    const ownedNames = new Set();
+    records.forEach(r => {
+        if (r.rarity !== 'SSR') return;
+        if (r.character) ownedNames.add(r.character.trim());
+    });
+
+    const poolFilter = $('collectionPoolFilter').value;
+    const typeFilter = $('collectionTypeFilter').value;
+    const statusFilter = $('collectionStatusFilter').value;
+    const searchKeyword = $('collectionSearchInput').value.trim().toLowerCase();
+
+    let filtered = collectionItems;
+
+    if (poolFilter !== 'all') {
+        filtered = filtered.filter(item => item.poolId === poolFilter);
+    }
+
+    if (typeFilter !== 'all') {
+        filtered = filtered.filter(item => {
+            const pool = templates.find(t => t.id === item.poolId);
+            if (!pool) return false;
+            return typeFilter === 'limited' ? pool.isLimited : !pool.isLimited;
+        });
+    }
+
+    if (statusFilter === 'owned') {
+        filtered = filtered.filter(item => ownedNames.has(item.name.trim()));
+    } else if (statusFilter === 'missing') {
+        filtered = filtered.filter(item => !ownedNames.has(item.name.trim()));
+    }
+
+    if (searchKeyword) {
+        filtered = filtered.filter(item => {
+            const pool = templates.find(t => t.id === item.poolId) || { name: '未知', startDate: '', endDate: '' };
+            const nameMatch = item.name.toLowerCase().includes(searchKeyword);
+            const poolMatch = pool.name.toLowerCase().includes(searchKeyword);
+            const acquiredMatch = item.acquiredDate ? item.acquiredDate.includes(searchKeyword) : false;
+            const activityMatch = (pool.startDate + ' ~ ' + pool.endDate).toLowerCase().includes(searchKeyword);
+            return nameMatch || poolMatch || acquiredMatch || activityMatch;
+        });
+    }
+
+    const total = collectionItems.length;
+    const ownedTotal = collectionItems.filter(item => ownedNames.has(item.name.trim())).length;
+    $('ownedCount').textContent = ownedTotal;
+    $('totalCount').textContent = total;
+
+    const grid = $('collectionGridContainer');
+    grid.innerHTML = '';
+    if (!filtered.length) {
+        grid.innerHTML = '<div style="color:var(--text-secondary);grid-column:1/-1;text-align:center;padding:20px 0;">' +
+            (searchKeyword ? '🔍 没有匹配的图鉴条目' : '暂无图鉴条目') +
+            '</div>';
+        return;
+    }
+
+    filtered.forEach(item => {
+        const pool = templates.find(t => t.id === item.poolId) || { name: '未知', startDate: '', endDate: '', isLimited: false };
+        const isOwned = ownedNames.has(item.name.trim());
+        const acquired = item.acquiredDate || '未知';
+        const activity = pool.startDate && pool.endDate ? `${pool.startDate.slice(0,10)} ~ ${pool.endDate.slice(0,10)}` : '无活动';
+        const typeLabel = pool.isLimited ? '限定' : '常驻';
+        
+        // 优先使用图鉴自身图片，如果没有则从同名SSR记录中查找
+        let imageSrc = item.image;
+        if (!imageSrc) {
+            const rec = records.find(r => r.character && r.character.trim() === item.name.trim() && r.rarity === 'SSR' && r.image);
+            if (rec) imageSrc = rec.image;
+        }
+
+        const card = document.createElement('div');
+        card.className = `collection-card ${isOwned ? 'owned' : 'missing'}`;
+        card.innerHTML = `
+    <div class="card-actions">
+        <button class="edit-collection-btn" data-id="${item.id}" title="编辑">✏️</button>
+        <button class="delete-collection-btn" data-id="${item.id}" title="删除">🗑️</button>
+    </div>
+    ${imageSrc ? `<img src="${imageSrc}" onclick="showImage('${imageSrc}')" style="width:60px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--border);background:#f0ebe0;cursor:pointer;">` : `<div style="width:60px;height:60px;background:#f0ebe0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#b8aa94;border:1px solid var(--border);">无图</div>`}
+    <div class="item-name">${item.name}</div>
+    <div class="pool-name">${pool.name}</div>
+    <div class="meta-text" style="color:var(--gold);">${typeLabel}</div>
+    <div class="meta-text">获取：${acquired}</div>
+    <div class="${isOwned ? 'owned-badge' : 'missing-badge'}">${isOwned ? '✅ 已收集' : '❌ 未拥有'}</div>
+`;
+        grid.appendChild(card);
+    });
+
+    grid.querySelectorAll('.edit-collection-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            editCollectionItem(id);
+        });
+    });
+    grid.querySelectorAll('.delete-collection-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            deleteCollectionItem(id);
+        });
+    });
+}
+
+    function editCollectionItem(id){
+        const item = collectionItems.find(i => i.id === id);
+        if(!item) return;
+        editingCollectionId = id;
+        $('collectionModalTitle').textContent = '编辑图鉴';
+        $('collectionItemName').value = item.name;
+        $('collectionItemPool').value = item.poolId || 'default';
+        $('collectionAcquiredDate').value = item.acquiredDate || '';
+        collectionImageData = item.image || null;
+        if(collectionImageData){ $('collectionPreviewImg').src = collectionImageData; $('collectionPreviewImg').style.display = 'block'; } else { $('collectionPreviewImg').style.display = 'none'; }
+        $('collectionItemModal').classList.add('active');
+    }
+    window.editCollectionItem = editCollectionItem;
+
+    function deleteCollectionItem(id){
+        if(!confirm('确定要删除该图鉴条目吗？此操作不可撤销！')) return;
+        const idx = collectionItems.findIndex(i => i.id === id);
+        if(idx !== -1){
+            collectionItems.splice(idx, 1);
+            saveCollection();
+            renderCollectionPage();
+        }
+    }
+
+    $('syncCollectionBtn').addEventListener('click', syncCollectionFromRecords);
+
+    function populatePoolFilter(){
+        const sel = $('collectionPoolFilter');
+        sel.innerHTML = '<option value="all">全部池子</option>';
+        templates.forEach(t=>{ const o=document.createElement('option'); o.value=t.id; o.textContent=t.name; sel.appendChild(o); });
+    }
+    $('collectionPoolFilter').addEventListener('change', renderCollectionPage);
+    $('collectionTypeFilter').addEventListener('change', renderCollectionPage);
+    $('collectionStatusFilter').addEventListener('change', renderCollectionPage);
+    $('collectionSearchInput').addEventListener('input', renderCollectionPage);
+
+    $('addCollectionItemBtn').addEventListener('click', ()=>{
+        editingCollectionId = null;
+        $('collectionModalTitle').textContent = '添加图鉴';
+        $('collectionItemName').value = '';
+        $('collectionItemPool').value = currentTemplateId;
+        $('collectionAcquiredDate').value = new Date().toISOString().slice(0,10);
+        $('collectionItemImage').value = ''; collectionImageData = null;
+        $('collectionPreviewImg').style.display = 'none';
+        $('collectionItemModal').classList.add('active');
+    });
+    $('cancelCollectionBtn').addEventListener('click', ()=> $('collectionItemModal').classList.remove('active'));
+    $('collectionItemImage').addEventListener('change', async function(){
+        const f = this.files[0];
+        if(!f){ collectionImageData = null; $('collectionPreviewImg').style.display = 'none'; return; }
+        collectionImageData = await compressImage(f, 400, 0.6);
+        $('collectionPreviewImg').src = collectionImageData;
+        $('collectionPreviewImg').style.display = 'block';
+    });
+    $('saveCollectionBtn').addEventListener('click', ()=>{
+        const name = $('collectionItemName').value.trim();
+        if(!name){ alert('请输入名称'); return; }
+        const poolId = $('collectionItemPool').value;
+        const acquiredDate = $('collectionAcquiredDate').value || new Date().toISOString().slice(0,10);
+        if(editingCollectionId){
+            const idx = collectionItems.findIndex(i=>i.id===editingCollectionId);
+            if(idx!==-1) collectionItems[idx] = {...collectionItems[idx], name, poolId, image: collectionImageData || collectionItems[idx].image, acquiredDate};
+        } else {
+            if(collectionItems.some(i => i.name.toLowerCase() === name.toLowerCase())){
+                alert('该角色已在图鉴中！');
+                return;
+            }
+            collectionItems.push({ id: 'col_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), name, poolId, image: collectionImageData || '', acquiredDate });
+        }
+        saveCollection();
+        $('collectionItemModal').classList.remove('active');
+        renderCollectionPage();
+    });
+
+    // ===== 导出/导入 =====
+    function exportData(){
+        const data = { records, templates, currentTemplateId, pity: parseInt($('currentPityInput').value)||0, collection: collectionItems };
+        const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `夜幕笔记_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+    }
+    $('exportDataBtn').addEventListener('click', exportData);
+
+    function importData(file, mode) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (!data.records) {
+                    alert('❌ 无效的备份文件：缺少 records 字段');
+                    return;
+                }
+                if (mode === 'overwrite') {
+                    records = data.records || [];
+                    templates = data.templates || [];
+                    collectionItems = data.collection || [];
+                    if (data.currentTemplateId) currentTemplateId = data.currentTemplateId;
+                    if (data.pity !== undefined) $('currentPityInput').value = data.pity;
+                    alert('✅ 覆盖导入成功！');
+                } else {
+                    let addedRecords = 0, addedTemplates = 0, addedCollection = 0;
+                    const existingRecordKeys = new Set(records.map(r => JSON.stringify(r)));
+                    (data.records || []).forEach(r => {
+                        const key = JSON.stringify(r);
+                        if (!existingRecordKeys.has(key)) {
+                            records.push(r);
+                            existingRecordKeys.add(key);
+                            addedRecords++;
+                        }
+                    });
+                    const existingTemplateIds = new Set(templates.map(t => t.id));
+                    (data.templates || []).forEach(t => {
+                        if (!existingTemplateIds.has(t.id)) {
+                            templates.push(t);
+                            existingTemplateIds.add(t.id);
+                            addedTemplates++;
+                        }
+                    });
+                    const existingCollectionNames = new Set(collectionItems.map(c => c.name.toLowerCase()));
+                    (data.collection || []).forEach(c => {
+                        if (!existingCollectionNames.has(c.name.toLowerCase())) {
+                            collectionItems.push(c);
+                            existingCollectionNames.add(c.name.toLowerCase());
+                            addedCollection++;
+                        }
+                    });
+                    if (data.pity !== undefined) {
+                        $('currentPityInput').value = data.pity;
+                    }
+                    alert(`✅ 合并导入完成！\n新增记录 ${addedRecords} 条\n新增模板 ${addedTemplates} 个\n新增图鉴 ${addedCollection} 个`);
+                }
+                saveRecords();
+                saveTemplates();
+                saveCollection();
+                window.records.forEach(item => syncRecordToCollection(item));
+                expectCache.clear();
+                updatePityStatus();
+                renderCalendar();
+                renderLuckRanking();
+                renderBanners();
+                renderSearchResults();
+                refreshTemplateUI();
+                populatePoolFilter();
+                renderCollectionPage();
+                renderPastPools();
+            } catch(err) {
+                alert('❌ 导入失败：' + err.message);
+                console.error(err);
+            }
+        };
+        reader.onerror = function() {
+            alert('❌ 读取文件失败');
+        };
+        reader.readAsText(file);
+    }
+
+    $('importFileInput').addEventListener('change', function() {
+        const file = this.files[0];
+        if (!file) return;
+        const mode = document.querySelector('input[name="importMode"]:checked').value;
+        importData(file, mode);
+        this.value = '';
+    });
+
+    // ===== 主题设置 =====
+    function loadThemeSettings() {
+        const bgColor = localStorage.getItem('nightfall_bg_color') || '#f5f0e6';
+        const textColor = localStorage.getItem('nightfall_text_color') || '#4a3f35';
+        const uiColor = localStorage.getItem('nightfall_ui_color') || '#b8860b';
+        applyTheme(bgColor, textColor, uiColor);
+        document.getElementById('bgColorPicker').value = bgColor;
+        document.getElementById('textColorPicker').value = textColor;
+        document.getElementById('uiColorPicker').value = uiColor;
+        document.querySelectorAll('#bgColorOptions .color-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.color === bgColor);
+        });
+        document.querySelectorAll('#textColorOptions .color-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.color === textColor);
+        });
+        document.querySelectorAll('#uiColorOptions .color-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.color === uiColor);
+        });
+        document.getElementById('textColorPreview').style.color = textColor;
+    }
+
+    function applyTheme(bg, text, ui) {
+        document.documentElement.style.setProperty('--bg', bg);
+        document.documentElement.style.setProperty('--text', text);
+        document.documentElement.style.setProperty('--text-secondary', text);
+        document.documentElement.style.setProperty('--gold', ui);
+        document.documentElement.style.setProperty('--border', ui);
+        document.getElementById('bgLayer').style.backgroundColor = bg;
+        localStorage.setItem('nightfall_bg_color', bg);
+        localStorage.setItem('nightfall_text_color', text);
+        localStorage.setItem('nightfall_ui_color', ui);
+        document.getElementById('textColorPreview').style.color = text;
+    }
+
+    document.querySelectorAll('#bgColorOptions .color-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const color = this.dataset.color;
+            document.querySelectorAll('#bgColorOptions .color-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('bgColorPicker').value = color;
+            applyTheme(color, document.getElementById('textColorPicker').value, document.getElementById('uiColorPicker').value);
+        });
+    });
+    document.getElementById('bgColorPicker').addEventListener('input', function() {
+        const color = this.value;
+        document.querySelectorAll('#bgColorOptions .color-btn').forEach(b => b.classList.remove('active'));
+        applyTheme(color, document.getElementById('textColorPicker').value, document.getElementById('uiColorPicker').value);
+    });
+    document.getElementById('resetBgColorBtn').addEventListener('click', function() {
+        document.getElementById('bgColorPicker').value = '#f5f0e6';
+        document.querySelectorAll('#bgColorOptions .color-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('#bgColorOptions .color-btn[data-color="#f5f0e6"]').classList.add('active');
+        applyTheme('#f5f0e6', document.getElementById('textColorPicker').value, document.getElementById('uiColorPicker').value);
+    });
+
+    document.querySelectorAll('#textColorOptions .color-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const color = this.dataset.color;
+            document.querySelectorAll('#textColorOptions .color-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('textColorPicker').value = color;
+            applyTheme(document.getElementById('bgColorPicker').value, color, document.getElementById('uiColorPicker').value);
+        });
+    });
+    document.getElementById('textColorPicker').addEventListener('input', function() {
+        const color = this.value;
+        document.querySelectorAll('#textColorOptions .color-btn').forEach(b => b.classList.remove('active'));
+        applyTheme(document.getElementById('bgColorPicker').value, color, document.getElementById('uiColorPicker').value);
+    });
+    document.getElementById('resetTextColorBtn').addEventListener('click', function() {
+        document.getElementById('textColorPicker').value = '#4a3f35';
+        document.querySelectorAll('#textColorOptions .color-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('#textColorOptions .color-btn[data-color="#4a3f35"]').classList.add('active');
+        applyTheme(document.getElementById('bgColorPicker').value, '#4a3f35', document.getElementById('uiColorPicker').value);
+    });
+
+    document.querySelectorAll('#uiColorOptions .color-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const color = this.dataset.color;
+            document.querySelectorAll('#uiColorOptions .color-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('uiColorPicker').value = color;
+            applyTheme(document.getElementById('bgColorPicker').value, document.getElementById('textColorPicker').value, color);
+        });
+    });
+    document.getElementById('uiColorPicker').addEventListener('input', function() {
+        const color = this.value;
+        document.querySelectorAll('#uiColorOptions .color-btn').forEach(b => b.classList.remove('active'));
+        applyTheme(document.getElementById('bgColorPicker').value, document.getElementById('textColorPicker').value, color);
+    });
+    document.getElementById('resetUiColorBtn').addEventListener('click', function() {
+        document.getElementById('uiColorPicker').value = '#b8860b';
+        document.querySelectorAll('#uiColorOptions .color-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('#uiColorOptions .color-btn[data-color="#b8860b"]').classList.add('active');
+        applyTheme(document.getElementById('bgColorPicker').value, document.getElementById('textColorPicker').value, '#b8860b');
+    });
+
+    // ===== 字体 =====
+    const fontMap = {
+        'ZCOOL KuaiLe': 'https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap',
+        'ZCOOL WenYi': 'https://fonts.googleapis.com/css2?family=ZCOOL+WenYi&display=swap',
+        'Smiley Sans': 'https://cdn.jsdelivr.net/npm/@fontsource/smiley-sans/index.css',
+        'LXGW WenKai': 'https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont/style.css'
+    };
+    function switchFont(name, cn, cl){
+        if(name==='custom'){ if(cn && cl){ dynamicFontLink.href = cl; document.documentElement.style.setProperty('--font', `'${cn}',sans-serif`); localStorage.setItem('nightfall_font', JSON.stringify({type:'custom', name:cn, link:cl})); } }
+        else { if(fontMap[name]){ dynamicFontLink.href = fontMap[name]; document.documentElement.style.setProperty('--font', `'${name}',sans-serif`); localStorage.setItem('nightfall_font', JSON.stringify({type:'preset', name})); } }
+    }
+    document.getElementById('fontSelect').addEventListener('change', ()=>{
+        if(document.getElementById('fontSelect').value === 'custom'){ document.getElementById('customFontNameGroup').style.display = 'flex'; document.getElementById('customFontLinkGroup').style.display = 'flex'; }
+        else { document.getElementById('customFontNameGroup').style.display = 'none'; document.getElementById('customFontLinkGroup').style.display = 'none'; switchFont(document.getElementById('fontSelect').value); }
+    });
+    document.getElementById('applyFontBtn').addEventListener('click', ()=>{
+        if(document.getElementById('fontSelect').value === 'custom') switchFont('custom', document.getElementById('customFontName').value.trim(), document.getElementById('customFontLink').value.trim());
+        else switchFont(document.getElementById('fontSelect').value);
+    });
+    (function(){ const s = localStorage.getItem('nightfall_font'); if(!s) return; try{ const p = JSON.parse(s); if(p.type === 'preset'){ document.getElementById('fontSelect').value = p.name; switchFont(p.name); } else { document.getElementById('fontSelect').value = 'custom'; document.getElementById('customFontName').value = p.name; document.getElementById('customFontLink').value = p.link; document.getElementById('customFontNameGroup').style.display = 'flex'; document.getElementById('customFontLinkGroup').style.display = 'flex'; switchFont('custom', p.name, p.link); } } catch(e){} })();
+
+    // ===== 页面装饰 =====
+    const decoImg = document.getElementById('decoImage');
+    function removeWhiteBackground(src, cb){ const img = new Image(); img.crossOrigin = "Anonymous"; img.onload = ()=>{ const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const ctx = c.getContext('2d'); ctx.drawImage(img,0,0); const id = ctx.getImageData(0,0,c.width,c.height); const d = id.data; for(let i=0;i<d.length;i+=4){ if(d[i]>240 && d[i+1]>240 && d[i+2]>240) d[i+3]=0; } ctx.putImageData(id,0,0); cb(c.toDataURL('image/png')); }; img.onerror = ()=> cb(src); img.src = src; }
+    function applyDeco(src, pos){ decoImg.src = src; decoImg.style.display = 'block'; decoImg.className = 'deco-img deco-'+pos; localStorage.setItem('nightfall_deco', JSON.stringify({src, pos})); document.getElementById('decoPreviewImg').src = src; document.getElementById('decoPreviewImg').classList.remove('hidden'); }
+    function removeDeco(){ decoImg.src = ''; decoImg.style.display = 'none'; localStorage.removeItem('nightfall_deco'); document.getElementById('decoPreviewImg').classList.add('hidden'); document.getElementById('decoPreviewImg').src = ''; }
+    function loadDeco(){ const s = localStorage.getItem('nightfall_deco'); if(s){ try{ const d = JSON.parse(s); if(d.src) applyDeco(d.src, d.pos||'bottom-right'); }catch(e){} } }
+    document.getElementById('applyDecoBtn').addEventListener('click', ()=>{
+        const url = document.getElementById('decoUrl').value.trim(), file = document.getElementById('decoFile').files[0], pos = document.getElementById('decoPosition').value;
+        if(url) removeWhiteBackground(url, (t)=> applyDeco(t, pos));
+        else if(file){ const r = new FileReader(); r.onload = e => removeWhiteBackground(e.target.result, (t)=> applyDeco(t, pos)); r.readAsDataURL(file); }
+        else alert('请输入图片链接或上传图片');
+    });
+    document.getElementById('removeDecoBtn').addEventListener('click', removeDeco);
+
+    // ===== 教程 =====
+    const tutorialModal = document.getElementById('tutorialModal');
+    function showTutorial(){ tutorialModal.classList.add('active'); }
+    function hideTutorial(){ tutorialModal.classList.remove('active'); localStorage.setItem('nightfall_tutorial_done','1'); }
+    document.getElementById('tutorialBtn').addEventListener('click', showTutorial);
+    document.getElementById('closeTutorialBtn').addEventListener('click', hideTutorial);
+    document.getElementById('closeTutorialFooterBtn').addEventListener('click', hideTutorial);
+    if(!localStorage.getItem('nightfall_tutorial_done')) showTutorial();
+
+    // ===== 备份提醒 =====
+    function checkBackup(){ const last = localStorage.getItem('nightfall_backup_ts'); if(!last || Date.now()-parseInt(last) > 7*24*3600*1000) document.getElementById('backupModal').classList.add('active'); }
+    document.getElementById('skipBackupBtn').addEventListener('click', ()=>{ localStorage.setItem('nightfall_backup_ts', Date.now()); document.getElementById('backupModal').classList.remove('active'); });
+    document.getElementById('quickExportBtn').addEventListener('click', ()=>{ exportData(); localStorage.setItem('nightfall_backup_ts', Date.now()); document.getElementById('backupModal').classList.remove('active'); });
+
+    // ===== 快速换算 =====
+    function saveCalcSettings() {
+        localStorage.setItem('nightfall_calc_settings', JSON.stringify({
+            direction: document.getElementById('calcDirection').value,
+            perPage: document.getElementById('calcPerPage').value,
+            poolType: document.getElementById('calcPoolType').value,
+            lastSSR: document.getElementById('calcLastSSR').value
+        }));
+    }
+   function loadCalcSettings() {
+    const saved = localStorage.getItem('nightfall_calc_settings');
+    if (saved) {
+        try {
+            const data = JSON.parse(saved);
+            if (data.direction) document.getElementById('calcDirection').value = data.direction;
+            if (data.perPage) document.getElementById('calcPerPage').value = data.perPage;
+            if (data.poolType) document.getElementById('calcPoolType').value = data.poolType;
+            if (data.lastSSR !== undefined) document.getElementById('calcLastSSR').value = data.lastSSR;
+            document.getElementById('calcLastSSRGroup').style.display = data.poolType === 'standard' ? 'flex' : 'none';
+        } catch(e) {}
+    }
+    autoFetchLastSSR();
+}
+
+function autoFetchLastSSR() {
+    const ssrHistory = JSON.parse(localStorage.getItem('nightfall_standard_ssr_history') || '[]');
+    if (ssrHistory.length > 0) {
+        const last = ssrHistory[ssrHistory.length - 1];
+        document.getElementById('calcLastSSR').value = last.totalPulls;
+    }
+}
+    loadCalcSettings();
+    document.getElementById('calcDirection').addEventListener('change', saveCalcSettings);
+    document.getElementById('calcPerPage').addEventListener('change', saveCalcSettings);
+    document.getElementById('calcPoolType').addEventListener('change', function() {
+        saveCalcSettings();
+        document.getElementById('calcLastSSRGroup').style.display = this.value === 'standard' ? 'flex' : 'none';
+    });
+    document.getElementById('calcLastSSR').addEventListener('change', saveCalcSettings);
+
+    document.getElementById('openCalcBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('calcModal').classList.add('active');
+    });
+    document.getElementById('closeCalcBtn').addEventListener('click', function() {
+        document.getElementById('calcModal').classList.remove('active');
+    });
+    document.getElementById('calcModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+        }
+    });
+
+    document.getElementById('calcBtn').addEventListener('click', function() {
+        const per = parseInt(document.getElementById('calcPerPage').value) || 10;
+        const page = parseInt(document.getElementById('calcPage').value) || 1;
+        const pos = parseInt(document.getElementById('calcPosition').value) || 1;
+        const full = parseInt(document.getElementById('calcFullPages').value) || 0;
+        const extra = parseInt(document.getElementById('calcExtraPulls').value) || 0;
+        const dir = document.getElementById('calcDirection').value;
+        const poolType = document.getElementById('calcPoolType').value;
+        const lastSSR = parseInt(document.getElementById('calcLastSSR').value) || 0;
+
+        if (extra >= per) { alert('零头抽数不能≥每页抽数'); return; }
+
+        const totalPages = full + (extra > 0 ? 1 : 0);
+        const total = full * per + extra;
+        let draw = 0;
+        let actualPage = 0;
+
+        if (dir === 'normal') {
+            actualPage = page;
+        } else {
+            actualPage = totalPages - page + 1;
+        }
+
+        if (page < 1 || page > totalPages) {
+            alert(`页数超限，总页数为 ${totalPages}`);
+            return;
+        }
+
+        const isFirstPage = (actualPage === 1);
+        const maxPos = isFirstPage && extra > 0 ? extra : per;
+
+        if (pos < 1 || pos > maxPos) {
+            const pageType = isFirstPage ? '零头' : '完整';
+            alert(`第 ${page} 页${dir === 'normal' ? '（正序）' : '（倒序）'}是${pageType}页，只有 ${maxPos} 抽，位置不能超出`);
+            return;
+        }
+
+        draw = (actualPage - 1) * per + pos;
+        if (draw > total) { alert('出货抽数>总抽数'); return; }
+
+        let interval = draw;
+        if (poolType === 'standard' && lastSSR > 0 && lastSSR < draw) {
+            interval = draw - lastSSR;
+        }
+
+        document.getElementById('calcTotalPulls').textContent = total;
+        document.getElementById('calcDrawPulls').textContent = draw;
+        document.getElementById('calcIntervalPulls').textContent = (poolType === 'standard' && lastSSR > 0 && lastSSR < draw) ? interval : '-';
+        document.getElementById('calcPityPulls').textContent = total - draw;
+        document.getElementById('calcResult').style.display = 'flex';
+    });
+
+    document.getElementById('applyCalcBtn').addEventListener('click', function() {
+    const date = document.getElementById('recordDate').value;
+    if (!date) { alert('请先在日历中选择日期'); return; }
+
+    const draw = parseInt(document.getElementById('calcDrawPulls').textContent);
+    const total = parseInt(document.getElementById('calcTotalPulls').textContent);
+    const poolType = document.getElementById('calcPoolType').value;
+
+    let pullsToRecord = draw;
+
+    if (poolType === 'standard') {
+        const ssrHistory = JSON.parse(localStorage.getItem('nightfall_standard_ssr_history') || '[]');
+        let lastTotalPulls = 0;
+        if (ssrHistory.length > 0) {
+            lastTotalPulls = ssrHistory[ssrHistory.length - 1].totalPulls || 0;
+        }
+        if (lastTotalPulls > 0 && lastTotalPulls < total) {
+            pullsToRecord = total - lastTotalPulls;
+        }
+    }
+
+    if (!draw || draw <= 0) { alert('请先点击计算'); return; }
+
+    document.getElementById('pullsInput').value = pullsToRecord;
+    document.getElementById('currentPityInput').value = document.getElementById('calcPityPulls').textContent;
+    updatePityStatus();
+
+    if (poolType === 'standard') {
+        let ssrHistory = JSON.parse(localStorage.getItem('nightfall_standard_ssr_history') || '[]');
+        ssrHistory.push({ date: date, totalPulls: total });
+        localStorage.setItem('nightfall_standard_ssr_history', JSON.stringify(ssrHistory));
+        document.getElementById('calcLastSSR').value = total;
+    }
+
+    const stats = JSON.parse(localStorage.getItem('nightfall_calc_stats') || '{}');
+    stats[date] = total;
+    localStorage.setItem('nightfall_calc_stats', JSON.stringify(stats));
+
+    document.getElementById('calcModal').classList.remove('active');
+    document.getElementById('recordCharacter').focus();
+    showDayDetail(date);
+});
+
+    document.querySelectorAll('.modal-close').forEach(b => b.addEventListener('click', ()=> b.parentElement.parentElement.classList.remove('active')));
+
+    document.getElementById('prevMonthBtn').addEventListener('click', ()=>{ if(--currentMonth < 0){ currentMonth = 11; currentYear--; } renderCalendar(); });
+    document.getElementById('nextMonthBtn').addEventListener('click', ()=>{ if(++currentMonth > 11){ currentMonth = 0; currentYear++; } renderCalendar(); });
+
+    document.querySelectorAll('.nav-btn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+            document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+            document.getElementById(btn.dataset.page).classList.add('active');
+            if(btn.dataset.page === 'page-pool'){ renderLuckRanking(); renderPastPools(); }
+            if(btn.dataset.page === 'page-collection') renderCollectionPage();
+            if(btn.dataset.page === 'page-data') renderSearchResults();
+            if(btn.dataset.page === 'page-theme') { loadThemeSettings(); }
+        });
+    });
+
+    function refreshTemplateUI(){ populateTemplateSelect(); updateRecordPoolSelect(); populatePoolFilter(); expectCache.clear(); updatePityStatus(); renderCalendar(); renderLuckRanking(); renderBanners(); renderCollectionPage(); renderPastPools(); }
+    function populateTemplateSelect(){
+        const sel = $('templateSelect');
+        sel.innerHTML = '';
+        templates.forEach(t=>{ const o=document.createElement('option'); o.value=t.id; o.textContent=t.name; if(t.id===currentTemplateId) o.selected=true; sel.appendChild(o); });
+    }
+    $('templateSelect').addEventListener('change', ()=>{ currentTemplateId = $('templateSelect').value; saveTemplates(); refreshTemplateUI(); });
+
+    function openTemplateModal(tmpl=null){
+        const lastParams = JSON.parse(localStorage.getItem('nightfall_last_template_params') || '{}');
+        if(tmpl){
+            editingTemplateId = tmpl.id;
+            $('templateModalTitle').textContent = '编辑模板';
+            $('templateNameInput').value = tmpl.name;
+            $('templateSsrProb').value = tmpl.ssrProb * 100;
+            $('templatePity').value = tmpl.hardPity;
+            $('templateMissProb').value = tmpl.missProb * 100;
+            $('templateGuarantee').value = tmpl.guaranteeCount;
+            $('templateStartDate').value = tmpl.startDate ? tmpl.startDate.slice(0,16) : '';
+            $('templateEndDate').value = tmpl.endDate ? tmpl.endDate.slice(0,16) : '';
+            templateImageData = tmpl.bannerImage || null;
+            const container = document.getElementById('templateImgPreviewContainer');
+            const img = document.getElementById('templatePreviewImg');
+            if(templateImageData){ 
+                img.src = templateImageData; 
+                img.style.display = 'block';
+                container.style.display = 'block';
+            } else { 
+                img.style.display = 'none';
+                container.style.display = 'none';
+            }
+            $('templateIsLimited').value = tmpl.isLimited ? '1' : '0';
+        } else {
+            editingTemplateId = null;
+            $('templateModalTitle').textContent = '新增模板';
+            $('templateNameInput').value = '';
+            $('templateSsrProb').value = lastParams.ssrProb !== undefined ? lastParams.ssrProb : '2';
+            $('templatePity').value = lastParams.hardPity !== undefined ? lastParams.hardPity : '80';
+            $('templateMissProb').value = lastParams.missProb !== undefined ? lastParams.missProb : '50';
+            $('templateGuarantee').value = lastParams.guaranteeCount !== undefined ? lastParams.guaranteeCount : '1';
+            $('templateStartDate').value = '';
+            $('templateEndDate').value = '';
+            templateImageData = null;
+            document.getElementById('templatePreviewImg').style.display = 'none';
+            document.getElementById('templateImgPreviewContainer').style.display = 'none';
+            $('templateIsLimited').value = lastParams.isLimited !== undefined ? (lastParams.isLimited ? '1' : '0') : '1';
+        }
+        $('templateModal').classList.add('active');
+    }
+
+    function saveTemplateHandler(){
+        const name = $('templateNameInput').value.trim();
+        if(!name){ alert('请输入模板名称'); return; }
+        const ssrProb = parseFloat($('templateSsrProb').value) / 100;
+        const hardPity = parseInt($('templatePity').value) || 80;
+        const missProb = parseFloat($('templateMissProb').value) / 100;
+        const guaranteeCount = parseInt($('templateGuarantee').value) || 1;
+        const startDate = $('templateStartDate').value;
+        const endDate = $('templateEndDate').value;
+        const isLimited = $('templateIsLimited').value === '1';
+        const bannerImage = templateImageData || '';
+        const fixTime = (s) => { if(s && s.length===16) return s+':00'; return s; };
+        const start = fixTime(startDate);
+        const end = fixTime(endDate);
+        if(start && end && new Date(start) >= new Date(end)){ alert('结束时间必须晚于开始时间'); return; }
+        if(editingTemplateId){
+            const idx = templates.findIndex(t => t.id === editingTemplateId);
+            if(idx !== -1) templates[idx] = { ...templates[idx], name, ssrProb, hardPity, missProb, guaranteeCount, startDate: start, endDate: end, bannerImage, isLimited };
+        } else {
+            const newId = 'tpl_' + Date.now();
+            templates.push({ id: newId, name, ssrProb, hardPity, missProb, guaranteeCount, startDate: start, endDate: end, bannerImage, isLimited });
+            currentTemplateId = newId;
+        }
+        localStorage.setItem('nightfall_last_template_params', JSON.stringify({
+            ssrProb: parseFloat($('templateSsrProb').value),
+            hardPity: parseInt($('templatePity').value),
+            missProb: parseFloat($('templateMissProb').value),
+            guaranteeCount: parseInt($('templateGuarantee').value),
+            isLimited: $('templateIsLimited').value === '1'
+        }));
+        saveTemplates();
+        $('templateModal').classList.remove('active');
+        refreshTemplateUI();
+    }
+    $('saveTemplateBtn').addEventListener('click', saveTemplateHandler);
+    $('cancelTemplateBtn').addEventListener('click', ()=> $('templateModal').classList.remove('active'));
+    $('editTemplateBtn').addEventListener('click', ()=>{ const ct = getCurrentTemplate(); if(ct) openTemplateModal(ct); });
+    $('newTemplateBtn').addEventListener('click', ()=> openTemplateModal(null));
+    $('deleteTemplateBtn').addEventListener('click', ()=>{
+        if(templates.length <= 1){ alert('至少保留一个模板'); return; }
+        if(confirm('确定删除该模板？')){ templates = templates.filter(t=>t.id!==currentTemplateId); currentTemplateId = templates[0].id; saveTemplates(); refreshTemplateUI(); }
+    });
+    $('templateImageFile').addEventListener('change', async function(){
+        const f = this.files[0];
+        if(!f){ 
+            templateImageData = null; 
+            document.getElementById('templatePreviewImg').style.display = 'none';
+            document.getElementById('templateImgPreviewContainer').style.display = 'none';
+            return; 
+        }
+        templateImageData = await compressImage(f, 400, 0.6);
+        const img = document.getElementById('templatePreviewImg');
+        img.src = templateImageData;
+        img.style.display = 'block';
+        document.getElementById('templateImgPreviewContainer').style.display = 'block';
+    });
+
+    loadAll();
+    populateTemplateSelect();
+    populatePoolFilter();
+    updatePityStatus();
+    renderCalendar();
+    showDayDetail(selectedDate);
+    setInterval(renderBanners, 60000);
+    setInterval(renderPastPools, 60000);
+    checkBackup();
+})();
+</script>
+</body>
+</html>

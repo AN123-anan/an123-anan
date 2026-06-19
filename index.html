@@ -203,6 +203,13 @@
         .search-section-title { font-weight:600; color:var(--gold); margin:6px 0 4px 0; font-size:13px; }
         .search-empty { color:var(--text-secondary); padding:8px; font-size:13px; }
         .search-more { color:var(--text-secondary); font-size:11px; padding:2px 8px; }
+.tutorial-wrap {
+  z-index: 9999;
+}
+.tutorial-close, .tutorial-next-btn {
+  pointer-events: auto;
+  cursor: pointer;
+}
     </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -1938,7 +1945,6 @@ if (!(date in stats)) {
     document.getElementById('tutorialBtn').addEventListener('click', showTutorial);
     document.getElementById('closeTutorialBtn').addEventListener('click', hideTutorial);
     document.getElementById('closeTutorialFooterBtn').addEventListener('click', hideTutorial);
-    if(!localStorage.getItem('nightfall_tutorial_done')) showTutorial();
 
     // ===== 备份提醒 =====
     function checkBackup(){ const last = localStorage.getItem('nightfall_backup_ts'); if(!last || Date.now()-parseInt(last) > 7*24*3600*1000) document.getElementById('backupModal').classList.add('active'); }
@@ -2358,6 +2364,12 @@ async function initAuthSync() {
   if (user) {
     currentUserId = user.id;
     await loadCloudData();
+
+  // 新增：登录完成再弹出新手引导
+if(!localStorage.getItem("nightfall tutorial done")){
+  showTutorialial();
+}
+
     // 实时监听云端数据变化，多设备即时同步
     supabase.channel("user_sync_channel")
       .on("postgres_changes", {
@@ -2378,9 +2390,9 @@ async function initAuthSync() {
       return;
     }
     // 尝试登录，不存在则自动注册
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email, pwd });
     if (error) {
-      const { error: regErr } = await supabase.auth.signUp({ email, password });
+      const { error: regErr } = await supabase.auth.signUp({ email, pwd });
       if (regErr) alert("注册失败：" + regErr.message);
       else location.reload();
     } else {
@@ -2388,7 +2400,6 @@ async function initAuthSync() {
     }
   }
 }
-
 // 页面加载自动执行登录校验
 initAuthSync();
 </script>

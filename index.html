@@ -285,20 +285,44 @@
     </div>
 
     <!-- 图鉴 -->
-    <div class="page" id="page-collection">
-        <div class="card">
-            <div class="card-title">📖 角色图鉴</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:12px;">
-                <select id="collectionPoolFilter"><option value="all">全部池子</option></select>
-                <select id="collectionStatusFilter"><option value="all">全部状态</option><option value="owned">已收集</option><option value="missing">未拥有</option></select>
-                <input type="text" id="collectionSearchInput" placeholder="🔍 搜索角色/池子/时间" style="flex:1;min-width:120px;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--input-bg);">
-                <button class="btn small primary" id="addCollectionItemBtn">＋ 添加</button>
-                <button class="btn small" id="syncCollectionBtn">📥 同步</button>
-                <span style="font-size:12px;">已收集 <b id="ownedCount">0</b> / <b id="totalCount">0</b></span>
-            </div>
-            <div id="collectionGridContainer" class="collection-grid"></div>
+<div class="page" id="page-collection">
+    <div class="card">
+        <div class="card-title">📖 角色图鉴</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:12px;">
+            <!-- ✅ 池子名称筛选 -->
+            <select id="collectionPoolFilter">
+                <option value="all">全部池子</option>
+            </select>
+            
+            <!-- ✅ 池子类型筛选（新增） -->
+            <select id="collectionPoolTypeFilter">
+                <option value="all">全部类型</option>
+                <option value="limited">限定池</option>
+                <option value="standard">常驻池</option>
+            </select>
+            
+            <!-- 状态筛选 -->
+            <select id="collectionStatusFilter">
+                <option value="all">全部状态</option>
+                <option value="owned">已收集</option>
+                <option value="missing">未拥有</option>
+            </select>
+            
+            <!-- 搜索框 -->
+            <input type="text" id="collectionSearchInput" placeholder="🔍 搜索角色/池子/时间" style="flex:1;min-width:120px;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--input-bg);">
+            
+            <!-- 添加按钮 -->
+            <button class="btn small primary" id="addCollectionItemBtn">＋ 添加</button>
+            
+            <!-- 同步按钮 -->
+            <button class="btn small" id="syncCollectionBtn">📥 同步</button>
+            
+            <!-- 统计 -->
+            <span style="font-size:12px;">已收集 <b id="ownedCount">0</b> / <b id="totalCount">0</b></span>
         </div>
+        <div id="collectionGridContainer" class="collection-grid"></div>
     </div>
+</div>
 
     <!-- 数据管理 -->
     <div class="page" id="page-data">
@@ -473,36 +497,90 @@
 
 <img id="decoImage" class="deco-img deco-bottom-right" src="" alt="" style="display:none;">
 
-<!-- 弹窗 -->
-<div class="modal" id="tutorialModal"><div class="modal-content" style="max-width:580px;padding:20px;"><span class="modal-close" id="closeTutorialBtn">&times;</span><div class="tutorial-pages" id="tutorialPages">
-    <div class="tutorial-page active" data-page="0">
-        <div class="tutorial-welcome"><h3>🐣 欢迎来到夜幕笔记</h3><p>你的专属抽卡记录助手</p></div>
-        <div class="tutorial-step"><div class="tutorial-step-icon">📅</div><div class="tutorial-step-content"><h4>抽卡日历</h4><p>在日历上直观查看每天的抽卡记录，点击日期查看详情。</p><p class="tip">💡 有圆点的日期表示当天有记录，颜色代表欧非运势。</p></div></div>
-        <div class="tutorial-step"><div class="tutorial-step-icon">🌟</div><div class="tutorial-step-content"><h4>池子中心</h4><p>管理卡池模板，查看夜幕榜排名，追踪往期池子。</p><p class="tip">💡 限定池需要记录 UP 结果，常驻池记录 SSR 即可。</p></div></div>
-        <div class="tutorial-step"><div class="tutorial-step-icon">📖</div><div class="tutorial-step-content"><h4>图鉴</h4><p>自动同步你抽到的 SSR 角色，手动添加或编辑图鉴条目。</p><p class="tip">💡 图鉴数据独立于抽卡记录，可以自由管理。</p></div></div>
-        <div class="tutorial-nav"><span></span><div class="dots"><span class="active" data-page="0"></span><span data-page="1"></span><span data-page="2"></span></div><button class="btn small" data-tutorial-next>下一步 →</button></div>
-    </div>
-    <div class="tutorial-page" data-page="1">
-        <div class="page-title"><span class="emoji">📝</span> 快速上手</div>
-        <div class="page-desc">三步开始记录你的抽卡旅程</div>
-        <div class="tutorial-feature-grid">
-            <div class="tutorial-feature-item"><div class="label">① 创建池子</div><div class="desc">在「池子中心」新建模板，设置概率和保底</div></div>
-            <div class="tutorial-feature-item"><div class="label">② 记录抽卡</div><div class="desc">在「抽卡日历」选择日期，填写角色和抽数</div></div>
-            <div class="tutorial-feature-item"><div class="label">③ 查看运势</div><div class="desc">日历圆点颜色、夜幕榜、每日运势一目了然</div></div>
-            <div class="tutorial-feature-item"><div class="label">💾 数据安全</div><div class="desc">数据保存在浏览器，记得定期导出备份</div></div>
+<!-- 教程弹窗 -->
+<div class="modal" id="tutorialModal">
+    <div class="modal-content" style="max-width:580px;padding:20px;">
+        <span class="modal-close" id="closeTutorialBtn">&times;</span>
+        <div class="tutorial-pages" id="tutorialPages">
+            <!-- 第一页 -->
+            <div class="tutorial-page active" data-page="0">
+                <div class="tutorial-welcome">
+                    <h3>🐣 欢迎来到夜幕笔记</h3>
+                    <p>你的专属抽卡记录助手</p>
+                </div>
+                <div class="tutorial-step">
+                    <div class="tutorial-step-icon">📅</div>
+                    <div class="tutorial-step-content">
+                        <h4>抽卡日历</h4>
+                        <p>在日历上直观查看每天的抽卡记录，点击日期查看详情。</p>
+                        <p class="tip">💡 有圆点的日期表示当天有记录，颜色代表欧非运势。</p>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <div class="tutorial-step-icon">🌟</div>
+                    <div class="tutorial-step-content">
+                        <h4>池子中心</h4>
+                        <p>管理卡池模板，查看夜幕榜排名，追踪往期池子。</p>
+                        <p class="tip">💡 限定池需要记录 UP 结果，常驻池记录 SSR 即可。</p>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <div class="tutorial-step-icon">📖</div>
+                    <div class="tutorial-step-content">
+                        <h4>图鉴</h4>
+                        <p>自动同步你抽到的 SSR 角色，手动添加或编辑图鉴条目。</p>
+                        <p class="tip">💡 图鉴数据独立于抽卡记录，可以自由管理。</p>
+                    </div>
+                </div>
+                <div class="tutorial-nav">
+                    <span></span>
+                    <div class="dots">
+                        <span class="active" data-page="0"></span>
+                        <span data-page="1"></span>
+                    </div>
+                    <button class="btn small" data-tutorial-next>下一步 →</button>
+                </div>
+            </div>
+
+            <!-- 第二页 -->
+            <div class="tutorial-page" data-page="1">
+                <div class="page-title">
+                    <span class="emoji">📝</span> 快速上手
+                </div>
+                <div class="page-desc">三步开始记录你的抽卡旅程</div>
+                <div class="tutorial-feature-grid">
+                    <div class="tutorial-feature-item">
+                        <div class="label">① 创建池子</div>
+                        <div class="desc">在「池子中心」新建模板，设置概率和保底</div>
+                    </div>
+                    <div class="tutorial-feature-item">
+                        <div class="label">② 记录抽卡</div>
+                        <div class="desc">在「抽卡日历」选择日期，填写角色和抽数</div>
+                    </div>
+                    <div class="tutorial-feature-item">
+                        <div class="label">③ 查看运势</div>
+                        <div class="desc">日历圆点颜色、夜幕榜、每日运势一目了然</div>
+                    </div>
+                    <div class="tutorial-feature-item">
+                        <div class="label">💾 数据安全</div>
+                        <div class="desc">数据保存在浏览器，记得定期导出备份</div>
+                    </div>
+                </div>
+                <div class="tutorial-footer">
+                    <span class="highlight">✨ 开始你的抽卡记录之旅吧！</span>
+                </div>
+                <div class="tutorial-nav">
+                    <button class="btn small" data-tutorial-prev>← 上一步</button>
+                    <div class="dots">
+                        <span data-page="0"></span>
+                        <span class="active" data-page="1"></span>
+                    </div>
+                    <button class="btn small primary" id="closeTutorialFooterBtn">开始使用 🚀</button>
+                </div>
+            </div>
         </div>
-        <div class="tutorial-nav"><button class="btn small" data-tutorial-prev>← 上一步</button><div class="dots"><span data-page="0"></span><span class="active" data-page="1"></span><span data-page="2"></span></div><button class="btn small" data-tutorial-next>下一步 →</button></div>
     </div>
-    <div class="tutorial-page" data-page="2">
-        <div class="page-title"><span class="emoji">🎯</span> 进阶技巧</div>
-        <div class="page-desc">让夜幕笔记更强大</div>
-        <div class="tutorial-step"><div class="tutorial-step-icon">🧮</div><div class="tutorial-step-content"><h4>快速换算</h4><p>点击「🧮 换算」根据翻页位置计算总抽数和垫抽数，一键应用到记录。</p></div></div>
-        <div class="tutorial-step"><div class="tutorial-step-icon">🎨</div><div class="tutorial-step-content"><h4>主题定制</h4><p>自由调整背景、文字、UI颜色，甚至更换字体和角落装饰。</p></div></div>
-        <div class="tutorial-step"><div class="tutorial-step-icon">🔍</div><div class="tutorial-step-content"><h4>全局搜索</h4><p>在「数据管理」搜索角色、池子、日期、星级等所有内容。</p></div></div>
-        <div class="tutorial-footer"><span class="highlight">✨ 开始你的抽卡记录之旅吧！</span></div>
-        <div class="tutorial-nav"><button class="btn small" data-tutorial-prev>← 上一步</button><div class="dots"><span data-page="0"></span><span data-page="1"></span><span class="active" data-page="2"></span></div><button class="btn small primary" id="closeTutorialFooterBtn">开始使用 🚀</button></div>
-    </div>
-</div></div></div>
+</div>
 <div class="modal" id="backupModal"><div class="modal-content"><h3 style="font-size:16px;">💾 数据备份提醒</h3><p>数据仅保存在浏览器本地，清缓存可能丢失。</p><div class="actions"><button class="btn small" id="skipBackupBtn">稍后提醒</button><button class="btn primary small" id="quickExportBtn">立即导出</button></div></div></div>
 <!-- ★ 修复：给图片模态框关闭按钮加上 id -->
 <div class="modal" id="imageModal"><span class="modal-close" id="closeImageModalBtn">&times;</span><img id="modalImage" style="max-width:85%;max-height:85%;border-radius:8px;"></div>
@@ -555,18 +633,40 @@
 </div>
 
 <script>
+// ============================================================
+// 安全工具：转义 HTML 防止 XSS
+// ============================================================
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
 (function() {
-    // ===== 基础变量 =====
-    let records=[], templates=[], currentTemplateId=null, collectionItems=[];
-    let currentMonth=new Date().getMonth(), currentYear=new Date().getFullYear();
-    let selectedDate=new Date().toISOString().slice(0,10);
-    let selectedImageData=null, editingTemplateId=null, templateImageData=null;
-    let editRecordIndex=-1, editImageData=null, editingCollectionId=null, collectionImageData=null;
-    let evalMode = localStorage.getItem('nightfall_eval_mode') || 'fixed';
+   // ============================================================
+// 全局变量与初始化
+// ============================================================
+let records = [], templates = [], currentTemplateId = null, collectionItems = [];
+let currentMonth = new Date().getMonth(), currentYear = new Date().getFullYear();
+let selectedDate = new Date().toISOString().slice(0, 10);
+let selectedImageData = null, editingTemplateId = null, templateImageData = null;
+let editRecordIndex = -1, editImageData = null, editingCollectionId = null, collectionImageData = null;
+let evalMode = localStorage.getItem('nightfall_eval_mode') || 'fixed';
 
-    const defaultTemplate={id:'default',name:'默认卡池',ssrProb:0.02,hardPity:80,missProb:0.5,guaranteeCount:1,startDate:'',endDate:'',bannerImage:'',isLimited:true};
-    const $=id=>document.getElementById(id);
-    const expectCache=new Map();
+const defaultTemplate = {
+    id: 'default',
+    name: '默认卡池',
+    ssrProb: 0.02,
+    hardPity: 80,
+    missProb: 0.5,
+    guaranteeCount: 1,
+    startDate: '',
+    endDate: '',
+    bannerImage: '',
+    isLimited: true
+};
+const $ = id => document.getElementById(id);
+const expectCache = new Map();
 
     // ===== 模拟函数 =====
     function simulateExpectUP(tmpl) {
@@ -621,30 +721,66 @@
         }
     }
 
-    // ===== 存储 =====
-    function loadAll() {
-        const r=localStorage.getItem('nightfall_records_v13'); if(r) try{ records=JSON.parse(r) }catch(e){ records=[] }
-        const t=localStorage.getItem('nightfall_templates_v10'); if(t) try{ templates=JSON.parse(t) }catch(e){ templates=[] }
-        if(!templates.length){ templates.push({...defaultTemplate}); currentTemplateId=defaultTemplate.id }
-        else currentTemplateId=localStorage.getItem('nightfall_current_template_v10')||templates[0].id;
-        if(!templates.find(t=>t.id===currentTemplateId)) currentTemplateId=templates[0].id;
-        const p=localStorage.getItem('nightfall_current_pity_v8'); if(p) $('currentPityInput').value=p;
-        const c=localStorage.getItem('nightfall_collection_v2'); if(c) try{ collectionItems=JSON.parse(c) }catch(e){ collectionItems=[] }
-        evalMode = localStorage.getItem('nightfall_eval_mode') || 'fixed';
-        $('evalModeSelect').value = evalMode;
-        saveTemplates(); updateRecordPoolSelect(); renderBanners(); renderLuckRanking(); updatePityStatus(); loadDeco(); renderCollectionPage(); renderPastPools();
-        loadThemeSettings();
+ // ============================================================
+// 存储函数
+// ============================================================
+function saveRecords() {
+    localStorage.setItem('nightfall_records_v13', JSON.stringify(records));
+}
+function saveTemplates() {
+    localStorage.setItem('nightfall_templates_v10', JSON.stringify(templates));
+    localStorage.setItem('nightfall_current_template_v10', currentTemplateId);
+}
+function saveCollection() {
+    localStorage.setItem('nightfall_collection_v2', JSON.stringify(collectionItems));
+}
+function getCurrentTemplate() {
+    return templates.find(t => t.id === currentTemplateId) || templates[0];
+}
+function getTemplateById(id) {
+    return templates.find(t => t.id === id) || getCurrentTemplate();
+}
+function isPoolGraduated(tid) {
+    const tmpl = getTemplateById(tid);
+    if (tmpl.isLimited) {
+        return records.some(r => r.templateId === tid && r.rarity === 'SSR' && r.up === 'up');
+    } else {
+        return records.some(r => r.templateId === tid && r.rarity === 'SSR');
     }
-    function saveRecords(){ localStorage.setItem('nightfall_records_v13', JSON.stringify(records)); }
-    function saveTemplates(){ localStorage.setItem('nightfall_templates_v10', JSON.stringify(templates)); localStorage.setItem('nightfall_current_template_v10', currentTemplateId); }
-    function saveCollection(){ localStorage.setItem('nightfall_collection_v2', JSON.stringify(collectionItems)); }
-    function getCurrentTemplate(){ return templates.find(t=>t.id===currentTemplateId)||templates[0] }
-    function getTemplateById(id){ return templates.find(t=>t.id===id)||getCurrentTemplate() }
-    function isPoolGraduated(tid){
-        const tmpl=getTemplateById(tid);
-        if(tmpl.isLimited) return records.some(r=>r.templateId===tid && r.rarity==='SSR' && r.up==='up');
-        else return records.some(r=>r.templateId===tid && r.rarity==='SSR');
+}
+
+// ============================================================
+// 加载所有数据（初始化用）
+// ============================================================
+function loadAll() {
+    const r = localStorage.getItem('nightfall_records_v13');
+    if (r) try { records = JSON.parse(r); } catch(e) { records = []; }
+    
+    const t = localStorage.getItem('nightfall_templates_v10');
+    if (t) try { templates = JSON.parse(t); } catch(e) { templates = []; }
+    
+    if (!templates.length) {
+        templates.push({ ...defaultTemplate });
+        currentTemplateId = defaultTemplate.id;
+    } else {
+        currentTemplateId = localStorage.getItem('nightfall_current_template_v10') || templates[0].id;
     }
+    if (!templates.find(t => t.id === currentTemplateId)) {
+        currentTemplateId = templates[0].id;
+    }
+    
+    const p = localStorage.getItem('nightfall_current_pity_v8');
+    if (p) document.getElementById('currentPityInput').value = p;
+    
+    const c = localStorage.getItem('nightfall_collection_v2');
+    if (c) try { collectionItems = JSON.parse(c); } catch(e) { collectionItems = []; }
+    
+    evalMode = localStorage.getItem('nightfall_eval_mode') || 'fixed';
+    document.getElementById('evalModeSelect').value = evalMode;
+    
+    loadDeco();
+    loadThemeSettings();
+}
 
     // ===== 图鉴 =====
     function ensureCollectionItem(character, poolId, image, date) {
@@ -884,30 +1020,32 @@
         }
     }, 60000);
 
-    function showDayDetail(ds){
-        $('selectedDateTitle').textContent=ds;
-        const dayData=records.filter(r=>r.date===ds);
+    function showDayDetail(ds) {
+    try {
+        document.getElementById('selectedDateTitle').textContent = ds;
+        const dayData = records.filter(r => r.date === ds);
         const statsContainer = document.getElementById('dayStatsContainer');
-        const calcStats = JSON.parse(localStorage.getItem('nightfall_calc_stats') || '{}');
-        const calcTotal = calcStats[ds] || 0;
-        
-        let maxPull = 0;
-        let upCount = 0;
-        let upTotalPulls = 0;
+
+        // ★ 累加当天所有抽数（修复：原版只取最大值）
+        let totalPulls = 0;
+        let upCount = 0, upTotalPulls = 0;
         dayData.forEach(r => {
-            if (r.pulls > maxPull) maxPull = r.pulls;
-            if(r.rarity === 'SSR' && r.up === 'up'){
+            totalPulls += r.pulls;
+            if (r.rarity === 'SSR' && r.up === 'up') {
                 upCount++;
                 upTotalPulls += r.pulls;
             }
         });
-        const totalPulls = Math.max(maxPull, calcTotal);
-        
-        if(dayData.length > 0 || calcTotal > 0){
+
+        const calcStats = JSON.parse(localStorage.getItem('nightfall_calc_stats') || '{}');
+        const calcTotal = calcStats[ds] || 0;
+        const finalTotal = Math.max(totalPulls, calcTotal);
+
+        if (dayData.length > 0 || calcTotal > 0) {
             const avgUp = upCount > 0 ? (upTotalPulls / upCount).toFixed(1) : '-';
             statsContainer.innerHTML = `
                 <div class="day-stats">
-                    <span>📊 总抽数：<span class="stat-num">${totalPulls}</span></span>
+                    <span>📊 总抽数：<span class="stat-num">${finalTotal}</span></span>
                     <span>🎯 UP次数：<span class="stat-num">${upCount}</span></span>
                     <span>💰 UP总花费：<span class="stat-num">${upTotalPulls > 0 ? upTotalPulls : '-'}</span> 抽</span>
                     <span>📈 平均UP：<span class="stat-num">${avgUp}</span> 抽</span>
@@ -918,22 +1056,23 @@
             statsContainer.innerHTML = '';
         }
 
-        if(!dayData.length){ 
-            $('dayLuckText').textContent='这一天还没有记录。'; 
-            $('dayRecords').innerHTML=''; 
-            return; 
+        if (!dayData.length) {
+            document.getElementById('dayLuckText').textContent = '这一天还没有记录。';
+            document.getElementById('dayRecords').innerHTML = '';
+            return;
         }
+
         const tmpl = getDominantTemplateForDay(dayData);
-        let upTotal=0, upCount2=0;
+        let upTotal = 0, upCount2 = 0;
         dayData.forEach(r => {
-            if(r.rarity==='SSR' && r.up==='up'){
+            if (r.rarity === 'SSR' && r.up === 'up') {
                 upTotal += r.pulls;
                 upCount2++;
             }
         });
-        let luckHtml='';
-        if(upCount2>0){
-            const avg = upTotal/upCount2;
+        let luckHtml = '';
+        if (upCount2 > 0) {
+            const avg = upTotal / upCount2;
             const luck = evaluateLuck(avg, tmpl);
             const label = tmpl.isLimited ? '平均UP' : '平均SSR';
             const expect = getExpectFunc(tmpl)(tmpl);
@@ -941,13 +1080,17 @@
         } else {
             luckHtml = '<span class="luck-badge luck-normal">记录中（无UP）</span>';
         }
-        $('dayLuckText').innerHTML=luckHtml;
-        $('dayRecords').innerHTML=dayData.map(r=>{
-            const idx=records.indexOf(r), cls=r.rarity==='SSR'?'ssr-tag':(r.rarity==='SR'?'sr-tag':'r-tag');
-            const upHtml=r.rarity==='SSR'?(r.up==='up'?'<span class="up-tag result-tag">UP</span>':'<span class="miss-tag result-tag">歪</span>'):'';
-            const imgHtml=r.image ? `<img src="${r.image}" class="record-img" onclick="showImage('${r.image}')">` : '';
-            const charName = r.character ? r.character : '';
-            const pool=templates.find(t=>t.id===r.templateId); const pn=pool?pool.name:'未知';
+        document.getElementById('dayLuckText').innerHTML = luckHtml;
+
+        // ★ 使用 escapeHtml 转义用户输入（修复XSS漏洞）
+        document.getElementById('dayRecords').innerHTML = dayData.map(r => {
+            const idx = records.indexOf(r);
+            const cls = r.rarity === 'SSR' ? 'ssr-tag' : (r.rarity === 'SR' ? 'sr-tag' : 'r-tag');
+            const upHtml = r.rarity === 'SSR' ? (r.up === 'up' ? '<span class="up-tag result-tag">UP</span>' : '<span class="miss-tag result-tag">歪</span>') : '';
+            const imgHtml = r.image ? `<img src="${escapeHtml(r.image)}" class="record-img" onclick="showImage('${escapeHtml(r.image)}')">` : '';
+            const charName = escapeHtml(r.character || '');
+            const pool = templates.find(t => t.id === r.templateId);
+            const pn = pool ? escapeHtml(pool.name) : '未知';
             return `
                 <div class="record-item">
                     <div class="record-left">
@@ -967,7 +1110,10 @@
                 </div>
             `;
         }).join('');
+    } catch (e) {
+        console.error('showDayDetail error:', e);
     }
+}
 
     window.editRecord=function(idx){
         const rec=records[idx]; if(!rec) return;
@@ -1072,51 +1218,67 @@ if (!(date in stats)) {
     });
     $('cancelEditBtn').addEventListener('click', ()=> $('editRecordModal').classList.remove('active'));
 
-    // ===== 新增记录 =====
-    function addRecord(){
-        const date=$('recordDate').value; if(!date){ alert('请选择日期'); return; }
-        const poolId=$('recordPoolSelect').value;
-        const character=$('recordCharacter').value.trim() || '';
-        const rarity=$('raritySelect').value;
-        const pulls=parseInt($('pullsInput').value);
-        if(isNaN(pulls)||pulls<1){ alert('抽数至少为1'); return; }
-        const up = (rarity==='SSR') ? $('upSelect').value : null;
-        const record = {date, character, rarity, pulls, up, image:selectedImageData||null, templateId:poolId};
+// 核心函数：添加记录（★ 修复点：内置云同步、垫抽重置、统计修正）
+// ============================================================
+function addRecord() {
+    try {
+        const date = document.getElementById('recordDate').value;
+        if (!date) { alert('请选择日期'); return; }
+        const poolId = document.getElementById('recordPoolSelect').value;
+        const character = document.getElementById('recordCharacter').value.trim() || '';
+        const rarity = document.getElementById('raritySelect').value;
+        const pulls = parseInt(document.getElementById('pullsInput').value) || 1;
+        const up = (rarity === 'SSR') ? document.getElementById('upSelect').value : null;
+
+        // ★ FIXED: 图片上传至云端，不再用 base64
+        let image = selectedImageData;
+
+        const record = { date, character, rarity, pulls, up, image, templateId: poolId };
         records.push(record);
-        if(rarity === 'SSR' && character) {
-            ensureCollectionItem(character, poolId, selectedImageData || '', date);
+
+        if (rarity === 'SSR' && character) {
+            ensureCollectionItem(character, poolId, image, date);
         }
+
+        // ★ FIXED: 垫抽重置逻辑——常驻 SSR 或 限定 UP 均重置
         const pool = getTemplateById(poolId);
-        if(pool && !pool.isLimited && rarity === 'SSR'){
-            document.getElementById('currentPityInput').value = 0;
-            updatePityStatus();
-            localStorage.setItem('nightfall_current_pity_v8', '0');
-            setTimeout(() => {
-                alert('🎉 常驻池出 SSR！垫抽数已自动归零，保底重新计算。');
-            }, 100);
+        if (pool) {
+            if ((!pool.isLimited && rarity === 'SSR') || (pool.isLimited && up === 'up')) {
+                document.getElementById('currentPityInput').value = 0;
+                updatePityStatus();
+            }
         }
+
         saveRecords();
-        const stats = JSON.parse(localStorage.getItem('nightfall_calc_stats') || '{}');
-        if (!(date in stats)) {
-            const dayRecords = records.filter(r => r.date === date);
-            let maxPull = 0;
-            dayRecords.forEach(r => { if (r.pulls > maxPull) maxPull = r.pulls; });
-            if (maxPull > 0) stats[date] = maxPull;
-            else delete stats[date];
-            localStorage.setItem('nightfall_calc_stats', JSON.stringify(stats));
-        }
-        $('pullsInput').value='1';
-        $('raritySelect').value='SSR';
-        $('upSelect').value='up';
-        $('upGroup').style.display='flex';
-        $('imageFile').value=''; selectedImageData=null; 
-        $('previewImg').style.display='none'; 
-        $('previewImg').src='';
-        $('deletePreviewImgBtn').style.display='none';
-        $('recordCharacter').value='';
-        if(date!==selectedDate){ selectedDate=date; $('recordDate').value=date; }
-        renderCalendar(); showDayDetail(selectedDate); updatePityStatus(); renderLuckRanking(); renderSearchResults(); renderBanners(); renderCollectionPage(); renderPastPools();
+        saveCollection();
+        // ★ FIXED: 直接调用云端同步（原重写方式已废弃）
+        if (typeof saveToCloud === 'function') saveToCloud();
+
+        // 清空表单
+        document.getElementById('pullsInput').value = '1';
+        document.getElementById('raritySelect').value = 'SSR';
+        document.getElementById('upSelect').value = 'up';
+        document.getElementById('upGroup').style.display = 'flex';
+        document.getElementById('imageFile').value = '';
+        selectedImageData = null;
+        document.getElementById('previewImg').style.display = 'none';
+        document.getElementById('previewImg').src = '';
+        document.getElementById('recordCharacter').value = '';
+        if (date !== selectedDate) { selectedDate = date; document.getElementById('recordDate').value = date; }
+
+        renderCalendar();
+        showDayDetail(selectedDate);
+        updatePityStatus();
+        renderLuckRanking();
+        renderSearchResults();
+        renderBanners();
+        renderCollectionPage();
+        renderPastPools();
+    } catch (e) {
+        console.error('addRecord error:', e);
+        alert('添加记录失败，请检查数据');
     }
+}
     $('addBtn').addEventListener('click', addRecord);
     $('clearBtn').addEventListener('click', ()=>{
         if(confirm('⚠️ 确定清空所有记录？此操作不可撤销！')){ 
@@ -1560,85 +1722,114 @@ if (!(date in stats)) {
     });
 
     // ===== 图鉴页面 =====
-    function renderCollectionPage(){
-        const ownedNames = new Set();
-        records.forEach(r => {
-            if(r.rarity !== 'SSR') return;
-            if(r.character) ownedNames.add(r.character.trim());
-        });
+function renderCollectionPage() {
+    const ownedNames = new Set();
+    records.forEach(r => {
+        if (r.rarity !== 'SSR') return;
+        if (r.character) ownedNames.add(r.character.trim());
+    });
 
-        const poolFilter = $('collectionPoolFilter').value;
-        const statusFilter = $('collectionStatusFilter').value;
-        const searchKeyword = $('collectionSearchInput').value.trim().toLowerCase();
+    // 获取筛选条件
+    const poolFilter = document.getElementById('collectionPoolFilter').value;
+    const poolTypeFilter = document.getElementById('collectionPoolTypeFilter').value;  // ✅ 新增
+    const statusFilter = document.getElementById('collectionStatusFilter').value;
+    const searchKeyword = document.getElementById('collectionSearchInput').value.trim().toLowerCase();
 
-        let filtered = collectionItems;
-        if(poolFilter !== 'all') filtered = filtered.filter(item => item.poolId === poolFilter);
-        if(statusFilter === 'owned') filtered = filtered.filter(item => ownedNames.has(item.name.trim()));
-        else if(statusFilter === 'missing') filtered = filtered.filter(item => !ownedNames.has(item.name.trim()));
-
-        if(searchKeyword){
-            filtered = filtered.filter(item => {
-                const pool = templates.find(t=>t.id===item.poolId) || { name: '未知', startDate: '', endDate: '' };
-                const nameMatch = item.name.toLowerCase().includes(searchKeyword);
-                const poolMatch = pool.name.toLowerCase().includes(searchKeyword);
-                const acquiredMatch = item.acquiredDate ? item.acquiredDate.includes(searchKeyword) : false;
-                const activityMatch = (pool.startDate + ' ~ ' + pool.endDate).toLowerCase().includes(searchKeyword);
-                return nameMatch || poolMatch || acquiredMatch || activityMatch;
-            });
-        }
-
-        const total = collectionItems.length;
-        const ownedTotal = collectionItems.filter(item => ownedNames.has(item.name.trim())).length;
-        $('ownedCount').textContent = ownedTotal;
-        $('totalCount').textContent = total;
-
-        const grid = $('collectionGridContainer');
-        grid.innerHTML = '';
-        if(!filtered.length){ 
-            grid.innerHTML = '<div style="color:var(--text-secondary);grid-column:1/-1;text-align:center;padding:20px 0;">' + 
-                (searchKeyword ? '🔍 没有匹配的图鉴条目' : '暂无图鉴条目') + 
-            '</div>'; 
-            return; 
-        }
-
-        filtered.forEach(item => {
-            const pool = templates.find(t=>t.id===item.poolId) || { name: '未知', startDate: '', endDate: '' };
-            const isOwned = ownedNames.has(item.name.trim());
-            const acquired = item.acquiredDate || '未知';
-            const activity = pool.startDate && pool.endDate ? `${pool.startDate.slice(0,10)} ~ ${pool.endDate.slice(0,10)}` : '无活动';
-            const card = document.createElement('div');
-            card.className = `collection-card ${isOwned ? 'owned' : 'missing'}`;
-            card.innerHTML = `
-                <div class="card-actions">
-                    <button class="edit-collection-btn" data-id="${item.id}" title="编辑">✏️</button>
-                    <button class="delete-collection-btn" data-id="${item.id}" title="删除">🗑️</button>
-                </div>
-                <img src="${item.image||''}" onclick="showImage('${item.image}')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22%3E%3Crect fill=%22%23f0ebe0%22 width=%2280%22 height=%2280%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23b8aa94%22 font-size=%2212%22%3E无图%3C/text%3E%3C/svg%3E'">
-                <div class="item-name" onclick="jumpRecordByChar('${item.name}')">${item.name}</div>
-                <div class="pool-name">${pool.name}</div>
-                <div style="font-size:12px;color:#888;">抽中次数：${getCharDrawCount(item.name)}</div>
-                <div class="meta-text">获取：${acquired}</div>
-                <div class="meta-text">活动：${activity}</div>
-                <div class="${isOwned ? 'owned-badge' : 'missing-badge'}">${isOwned ? '✅ 已收集' : '❌ 未拥有'}</div>
-            `;
-            grid.appendChild(card);
-        });
-
-        grid.querySelectorAll('.edit-collection-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const id = btn.dataset.id;
-                editCollectionItem(id);
-            });
-        });
-        grid.querySelectorAll('.delete-collection-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const id = btn.dataset.id;
-                deleteCollectionItem(id);
-            });
+    let filtered = collectionItems;
+    
+    // ✅ 按池子名称筛选
+    if (poolFilter !== 'all') {
+        filtered = filtered.filter(item => item.poolId === poolFilter);
+    }
+    
+    // ✅ 按池子类型筛选（新增）
+    if (poolTypeFilter !== 'all') {
+        filtered = filtered.filter(item => {
+            const pool = templates.find(t => t.id === item.poolId);
+            if (!pool) return false;
+            if (poolTypeFilter === 'limited') return pool.isLimited === true;
+            if (poolTypeFilter === 'standard') return pool.isLimited === false;
+            return true;
         });
     }
+    
+    // 按状态筛选
+    if (statusFilter === 'owned') {
+        filtered = filtered.filter(item => ownedNames.has(item.name.trim()));
+    } else if (statusFilter === 'missing') {
+        filtered = filtered.filter(item => !ownedNames.has(item.name.trim()));
+    }
+
+    // 按搜索关键词筛选
+    if (searchKeyword) {
+        filtered = filtered.filter(item => {
+            const pool = templates.find(t => t.id === item.poolId) || { name: '未知', startDate: '', endDate: '' };
+            const nameMatch = item.name.toLowerCase().includes(searchKeyword);
+            const poolMatch = pool.name.toLowerCase().includes(searchKeyword);
+            const acquiredMatch = item.acquiredDate ? item.acquiredDate.includes(searchKeyword) : false;
+            const activityMatch = (pool.startDate + ' ~ ' + pool.endDate).toLowerCase().includes(searchKeyword);
+            return nameMatch || poolMatch || acquiredMatch || activityMatch;
+        });
+    }
+
+    // 统计
+    const total = collectionItems.length;
+    const ownedTotal = collectionItems.filter(item => ownedNames.has(item.name.trim())).length;
+    document.getElementById('ownedCount').textContent = ownedTotal;
+    document.getElementById('totalCount').textContent = total;
+
+    // 渲染卡片
+    const grid = document.getElementById('collectionGridContainer');
+    grid.innerHTML = '';
+    
+    if (!filtered.length) {
+        grid.innerHTML = '<div style="color:var(--text-secondary);grid-column:1/-1;text-align:center;padding:20px 0;">' + 
+            (searchKeyword ? '🔍 没有匹配的图鉴条目' : '暂无图鉴条目') + 
+        '</div>';
+        return;
+    }
+
+    filtered.forEach(item => {
+        const pool = templates.find(t => t.id === item.poolId) || { name: '未知', startDate: '', endDate: '' };
+        const isOwned = ownedNames.has(item.name.trim());
+        const acquired = item.acquiredDate || '未知';
+        const activity = pool.startDate && pool.endDate ? pool.startDate.slice(0, 10) + ' ~ ' + pool.endDate.slice(0, 10) : '无活动';
+        
+        const card = document.createElement('div');
+        card.className = 'collection-card ' + (isOwned ? 'owned' : 'missing');
+        const poolTypeLabel = pool.isLimited ? '限定' : '常驻';
+        
+        card.innerHTML = `
+            <div class="card-actions">
+                <button class="edit-collection-btn" data-id="${item.id}" title="编辑">✏️</button>
+                <button class="delete-collection-btn" data-id="${item.id}" title="删除">🗑️</button>
+            </div>
+            <img src="${item.image || ''}" onclick="showImage('${item.image || ''}')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22%3E%3Crect fill=%22%23f0ebe0%22 width=%2280%22 height=%2280%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23b8aa94%22 font-size=%2212%22%3E无图%3C/text%3E%3C/svg%3E'">
+            <div class="item-name" onclick="jumpRecordByChar('${item.name}')">${item.name}</div>
+            <div class="pool-name">${pool.name}</div>
+            <div style="font-size:10px;color:var(--text-secondary);">${poolTypeLabel}</div>
+            <div style="font-size:12px;color:#888;">抽中次数：${getCharDrawCount(item.name)}</div>
+            <div class="meta-text">获取：${acquired}</div>
+            <div class="meta-text">活动：${activity}</div>
+            <div class="${isOwned ? 'owned-badge' : 'missing-badge'}">${isOwned ? '✅ 已收集' : '❌ 未拥有'}</div>
+        `;
+        grid.appendChild(card);
+    });
+
+    // 绑定编辑/删除按钮事件
+    grid.querySelectorAll('.edit-collection-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            editCollectionItem(this.dataset.id);
+        });
+    });
+    grid.querySelectorAll('.delete-collection-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            deleteCollectionItem(this.dataset.id);
+        });
+    });
+}
 
     function editCollectionItem(id){
         const item = collectionItems.find(i => i.id === id);
@@ -1667,13 +1858,20 @@ if (!(date in stats)) {
     $('syncCollectionBtn').addEventListener('click', syncCollectionFromRecords);
 
     function populatePoolFilter(){
-        const sel = $('collectionPoolFilter');
-        sel.innerHTML = '<option value="all">全部池子</option>';
-        templates.forEach(t=>{ const o=document.createElement('option'); o.value=t.id; o.textContent=t.name; sel.appendChild(o); });
-    }
-    $('collectionPoolFilter').addEventListener('change', renderCollectionPage);
-    $('collectionStatusFilter').addEventListener('change', renderCollectionPage);
-    $('collectionSearchInput').addEventListener('input', renderCollectionPage);
+    const sel = $('collectionPoolFilter');
+    sel.innerHTML = '<option value="all">全部池子</option>';
+    templates.forEach(t => {
+        const o = document.createElement('option');
+        o.value = t.id;
+        const typeLabel = t.isLimited ? ' [限定]' : ' [常驻]';
+        o.textContent = t.name + typeLabel;
+        sel.appendChild(o);
+    });
+}
+   $('collectionPoolFilter').addEventListener('change', renderCollectionPage);
+$('collectionPoolTypeFilter').addEventListener('change', renderCollectionPage); 
+$('collectionStatusFilter').addEventListener('change', renderCollectionPage);
+$('collectionSearchInput').addEventListener('input', renderCollectionPage);
 
     $('addCollectionItemBtn').addEventListener('click', ()=>{
         editingCollectionId = null;
@@ -1937,11 +2135,10 @@ if (!(date in stats)) {
     });
     document.getElementById('removeDecoBtn').addEventListener('click', removeDeco);
 
-    // ===== 教程 =====
-   // 教程弹窗完整分页逻辑
+   // ===== 教程 =====
 const tutorialModal = document.getElementById('tutorialModal');
 let currentTutorialPage = 0;
-const totalTutorialPage = 3;
+const totalTutorialPage = 2;  // ✅ 改为2页
 const pages = document.querySelectorAll(".tutorial-page");
 const dots = document.querySelectorAll(".tutorial-nav .dots span");
 const prevBtn = document.querySelector("[data-tutorial-prev]");
@@ -1949,54 +2146,56 @@ const nextBtn = document.querySelector("[data-tutorial-next]");
 
 // 显示指定页
 function renderTutorialPage(page) {
-  currentTutorialPage = page;
-  // 隐藏所有页面
-  pages.forEach(p => p.classList.remove("active"));
-  pages[page].classList.add("active");
-  // 更新圆点
-  dots.forEach((dot, idx) => dot.classList.toggle("active", idx === page));
-  // 控制按钮
-  prevBtn.style.visibility = page === 0 ? "hidden" : "visible";
-  // 最后一页切换文字
-  if(page === totalTutorialPage - 1){
-    nextBtn.textContent = "完成 🚀";
-  }else{
-    nextBtn.textContent = "下一步 →";
-  }
+    currentTutorialPage = page;
+    pages.forEach(p => p.classList.remove("active"));
+    pages[page].classList.add("active");
+    dots.forEach((dot, idx) => dot.classList.toggle("active", idx === page));
+    prevBtn.style.visibility = page === 0 ? "hidden" : "visible";
+    
+    // ✅ 第二页（最后一页）隐藏"下一页"按钮
+    if (page === totalTutorialPage - 1) {
+        nextBtn.style.display = "none";
+    } else {
+        nextBtn.style.display = "inline-block";
+        nextBtn.textContent = "下一步 →";
+    }
 }
 
 // 打开弹窗
-function showTutorial(){
-  tutorialModal.classList.add('active');
-  renderTutorialPage(0);
-}
-// 关闭弹窗并标记已看完
-function hideTutorial(){
-  tutorialModal.classList.remove('active');
-  localStorage.setItem('nightfall tutorial done','1');
+function showTutorial() {
+    tutorialModal.classList.add('active');
+    renderTutorialPage(0);
 }
 
-// 绑定按钮点击
+// 关闭弹窗并标记已看完
+function hideTutorial() {
+    tutorialModal.classList.remove('active');
+    localStorage.setItem('nightfall_tutorial_done', '1');
+}
+
+// ✅ 绑定按钮点击（包含关闭按钮）
 document.getElementById('tutorialBtn').addEventListener('click', showTutorial);
-document.getElementById('closeTutorialBtn').addEventListener('click', hideTutorial);
+document.getElementById('closeTutorialBtn').addEventListener('click', hideTutorial);  // ✅ 新增
 document.getElementById('closeTutorialFooterBtn').addEventListener('click', hideTutorial);
 
 // 上一步
-prevBtn.addEventListener("click", ()=>{
-  if(currentTutorialPage > 0) renderTutorialPage(currentTutorialPage - 1);
+prevBtn.addEventListener("click", function() {
+    if (currentTutorialPage > 0) renderTutorialPage(currentTutorialPage - 1);
 });
-// 下一步/完成
-nextBtn.addEventListener("click", ()=>{
-  if(currentTutorialPage < totalTutorialPage - 1){
-    renderTutorialPage(currentTutorialPage + 1);
-  }else{
-    hideTutorial();
-  }
+
+// 下一步
+nextBtn.addEventListener("click", function() {
+    if (currentTutorialPage < totalTutorialPage - 1) {
+        renderTutorialPage(currentTutorialPage + 1);
+    }
 });
+
 // 圆点点击跳转
-dots.forEach((dot,idx)=>{
-  dot.addEventListener("click", ()=> renderTutorialPage(idx));
-})
+dots.forEach((dot, idx) => {
+    dot.addEventListener("click", function() {
+        renderTutorialPage(idx);
+    });
+});
 
     // ===== 备份提醒 =====
     function checkBackup(){ const last = localStorage.getItem('nightfall_backup_ts'); if(!last || Date.now()-parseInt(last) > 7*24*3600*1000) document.getElementById('backupModal').classList.add('active'); }
@@ -2331,133 +2530,276 @@ function syncCollectionPoolToRecords(charName, newPool, newPoolType) {
 // 页面加载自动补全旧数据池子字段
 fillOldPoolData();</script>
 <script>
-// 替换为你的项目地址、Publishable密钥
+// ============================================================
+// 云端同步（修正合并策略）
+// ============================================================
 const SUPABASE_URL = "https://dpwkqujotopffxumsuad.supabase.co";
 const SUPABASE_KEY = "sb_publishable_sVMTj34S6aHOMFdKt0Fpxw_YnVzizjf";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUserId = null;
 let syncInterval = null;
 
-// 全局刷新页面所有数据视图
+// ============================================================
+// 渲染所有视图（放在 loadCloudData 前面）
+// ============================================================
 function renderAll() {
-  saveRecords();
-  saveTemplates();
-  saveCollection();
-  renderCalendar();
-  renderCollectionPage();
-  renderLuckRanking();
-  renderBanners();
-  renderPastPools();
+    renderCalendar();
+    renderLuckRanking();
+    renderBanners();
+    renderCollectionPage();
+    renderPastPools();
+    renderSearchResults();
 }
 
 // 从云端拉取自己的存档
 async function loadCloudData() {
-  if (!currentUserId) return;
-  const { data } = await supabase
-    .from("user_data")
-    .select("*")
-    .eq("user_id", currentUserId)
-    .single();
-
-  if (!data) return;
-  records = data.records || [];
-  templates = data.templates || [];
-  collectionItems = data.collection || [];
-  document.getElementById("currentPityInput").value = data.pity || 0;
-  localSyncStamp = data.update_time;
-  localStorage.setItem('sync_stamp', localSyncStamp);
-  renderAll();
-  alert("✅ 已同步云端全部抽卡数据");
+    if (!currentUserId) return;
+    try {
+        const { data, error } = await supabase
+            .from('user_data')
+            .select('*')
+            .eq('user_id', currentUserId)
+            .single();
+        if (error) throw error;
+        if (!data) return;
+        
+        const localHasData = records.length > 0 || templates.length > 0 || collectionItems.length > 0;
+        if (localHasData) {
+            const choice = confirm('检测到本地数据，是否覆盖为云端数据？\n点击「确定」覆盖（丢失本地），点击「取消」合并（保留本地新增）');
+            if (choice) {
+                records = data.records || [];
+                templates = data.templates || [];
+                collectionItems = data.collection || [];
+                document.getElementById('currentPityInput').value = data.pity || 0;
+            } else {
+                const existingKeys = new Set(records.map(r => JSON.stringify(r)));
+                (data.records || []).forEach(r => {
+                    const key = JSON.stringify(r);
+                    if (!existingKeys.has(key)) {
+                        records.push(r);
+                        existingKeys.add(key);
+                    }
+                });
+                const existingTplIds = new Set(templates.map(t => t.id));
+                (data.templates || []).forEach(t => {
+                    if (!existingTplIds.has(t.id)) {
+                        templates.push(t);
+                        existingTplIds.add(t.id);
+                    }
+                });
+                const existingCollNames = new Set(collectionItems.map(c => c.name.toLowerCase()));
+                (data.collection || []).forEach(c => {
+                    if (!existingCollNames.has(c.name.toLowerCase())) {
+                        collectionItems.push(c);
+                        existingCollNames.add(c.name.toLowerCase());
+                    }
+                });
+                if (data.pity !== undefined) {
+                    document.getElementById('currentPityInput').value = data.pity;
+                }
+            }
+        } else {
+            records = data.records || [];
+            templates = data.templates || [];
+            collectionItems = data.collection || [];
+            document.getElementById('currentPityInput').value = data.pity || 0;
+        }
+        saveRecords();
+        saveTemplates();
+        saveCollection();
+        renderAll();
+        alert('✅ 云端同步完成');
+    } catch (e) {
+        console.error('loadCloudData error:', e);
+        alert('云端同步失败，请检查网络：' + e.message);
+    }
 }
 
 // 本地数据上传云端
 async function saveToCloud() {
-  if (!currentUserId) return;
-  const syncData = {
-    user_id: currentUserId,
-    records,
-    templates,
-    collection: collectionItems,
-    pity: parseInt(document.getElementById("currentPityInput").value) || 0,
-    update_time: Date.now()
-  };
-  await supabase.from("user_data").upsert(syncData);
-  localStorage.setItem('sync_stamp', Date.now());
+    if (!currentUserId) return;
+    try {
+        const syncData = {
+            user_id: currentUserId,
+            records: records,
+            templates: templates,
+            collection: collectionItems,
+            pity: parseInt(document.getElementById('currentPityInput').value) || 0,
+            update_time: Date.now()
+        };
+        await supabase.from('user_data').upsert(syncData);
+        localStorage.setItem('sync_stamp', Date.now());
+    } catch (e) {
+        console.error('saveToCloud error:', e);
+    }
 }
 
-// 劫持所有增删改操作，自动同步云端
-const originAddRecord = addRecord;
-addRecord = function () {
-  originAddRecord();
-  saveToCloud();
-};
+// 图片上传至 Supabase Storage
+async function uploadImage(file) {
+    if (!file || !currentUserId) return null;
+    const fileName = `user_${currentUserId}/${Date.now()}_${file.name}`;
+    try {
+        const { data, error } = await supabase.storage.from('images').upload(fileName, file);
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('images').getPublicUrl(fileName);
+        return urlData.publicUrl;
+    } catch (e) {
+        console.error('uploadImage error:', e);
+        return null;
+    }
+}
 
-window.deleteRecord = function (idx) {
-  const oldDel = window.deleteRecord;
-  oldDel(idx);
-  saveToCloud();
-};
+// 修改图片选择事件，改为上传
+document.getElementById('imageFile').addEventListener('change', async function() {
+    const file = this.files[0];
+    if (!file) {
+        selectedImageData = null;
+        document.getElementById('previewImg').style.display = 'none';
+        document.getElementById('deletePreviewImgBtn').style.display = 'none';
+        return;
+    }
+    try {
+        const url = await uploadImage(file);
+        if (url) {
+            selectedImageData = url;
+            document.getElementById('previewImg').src = url;
+            document.getElementById('previewImg').style.display = 'block';
+            document.getElementById('deletePreviewImgBtn').style.display = 'flex';
+        } else {
+            alert('图片上传失败，请检查网络或权限');
+        }
+    } catch (e) {
+        alert('上传出错: ' + e.message);
+    }
+});
 
-document.getElementById("saveEditBtn").onclick = function () {
-  const oldSave = document.getElementById("saveEditBtn").onclick;
-  oldSave();
-  saveToCloud();
-};
-
-document.getElementById("saveCollectionBtn").onclick = function () {
-  const oldCollSave = document.getElementById("saveCollectionBtn").onclick;
-  oldCollSave();
-  saveToCloud();
-};
-
-// 登录/注册逻辑
+// 登录流程
 async function initAuthSync() {
-  // 新增兜底：CDN加载失败时直接提示，不卡死本地功能
-  if (!window.supabase) {
-    alert("云端同步组件加载失败，本地抽卡记录、新手教程功能可正常使用，切换网络刷新页面即可登录同步数据");
-    return;
-  }
-  // 下方原有代码保持不变
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    currentUserId = user.id;
-    await loadCloudData();
-    // 登录完成弹出新手引导（已修正函数名拼写错误）
-    if(!localStorage.getItem("nightfall tutorial done")){
-      showTutorial();
+    if (!window.supabase) {
+        alert('云端组件加载失败，本地功能可用，切换网络后刷新重试');
+        return;
     }
-    // 实时监听云端数据变化，多设备即时同步
-    supabase.channel("user_sync_channel")
-      .on("postgres_changes", {
-        event: "*",
-        schema: "public",
-        table: "user_data",
-        filter: `user_id.eq.${currentUserId}`
-      }, () => loadCloudData())
-      .subscribe();
-    // 每8秒自动备份本地数据
-    syncInterval = setInterval(saveToCloud, 8000);
-  } else {
-    // 弹窗输入邮箱密码
-    const email = prompt("请输入邮箱注册/登录");
-    const pwd = prompt("请输入密码（至少6位）");
-    if (!email || !pwd) {
-      alert("登录失败，刷新页面重试");
-      return;
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            currentUserId = user.id;
+            await loadCloudData();
+            if (!localStorage.getItem('nightfall_tutorial_done')) showTutorial();
+            supabase.channel('user_sync_channel')
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'user_data',
+                    filter: `user_id.eq.${currentUserId}`
+                }, () => loadCloudData())
+                .subscribe();
+            syncInterval = setInterval(saveToCloud, 8000);
+        } else {
+            document.getElementById('loginModal').classList.add('active');
+        }
+    } catch (e) {
+        console.error('initAuthSync error:', e);
     }
-    // 原有登录注册逻辑不变
-    const { error } = await supabase.auth.signInWithPassword({ email, pwd });
-    if (error) {
-      const { error: regErr } = await supabase.auth.signUp({ email, pwd });
-      if (regErr) alert("注册失败：" + regErr.message);
-      else location.reload();
-    } else {
-      location.reload();
-    }
-  }
 }
-// 页面加载自动执行登录校验
-initAuthSync();
+
+// 全局异常捕获
+window.onerror = function(msg, url, line, col, error) {
+    console.error('全局错误:', msg, error);
+    alert('页面出现错误，请刷新重试。错误信息已记录到控制台。');
+    return true;
+};
+
+// 页面加载初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadAll();
+    populateTemplateSelect();
+    populatePoolFilter();
+    updatePityStatus();
+    renderCalendar();
+    showDayDetail(selectedDate);
+    setInterval(renderBanners, 60000);
+    setInterval(renderPastPools, 60000);
+    checkBackup();
+    initAuthSync();
+});
 </script>
+    <!-- 登录模态框 -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content" style="max-width:400px;">
+            <span class="modal-close" id="closeLoginBtn">&times;</span>
+            <h3 style="margin-bottom:12px;">🔐 登录 / 注册</h3>
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" id="loginEmail" placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+                <label>密码（至少6位）</label>
+                <input type="password" id="loginPassword" placeholder="******">
+            </div>
+            <div class="form-group">
+                <label>确认密码</label>
+                <input type="password" id="loginConfirmPassword" placeholder="******">
+            </div>
+            <div class="actions" style="margin-top:12px;">
+                <button class="btn primary" id="loginBtn">登录 / 注册</button>
+                <button class="btn" id="cancelLoginBtn">取消</button>
+            </div>
+            <p style="font-size:11px;color:var(--text-secondary);margin-top:8px;">新用户将自动注册，旧用户直接登录</p>
+        </div>
+    </div>
+
+    <script>
+        // 关闭按钮
+        document.getElementById('closeLoginBtn').addEventListener('click', function() {
+            document.getElementById('loginModal').classList.remove('active');
+        });
+
+        // 取消按钮
+        document.getElementById('cancelLoginBtn').addEventListener('click', function() {
+            document.getElementById('loginModal').classList.remove('active');
+        });
+
+        // 点击背景关闭
+        document.getElementById('loginModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+            }
+        });
+
+        // 登录/注册按钮
+        document.getElementById('loginBtn').addEventListener('click', async function() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const confirmPwd = document.getElementById('loginConfirmPassword').value;
+
+            if (!email || !password) {
+                alert('请输入邮箱和密码');
+                return;
+            }
+            if (password !== confirmPwd) {
+                alert('两次密码输入不一致');
+                return;
+            }
+
+            try {
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) {
+                    const { error: regErr } = await supabase.auth.signUp({ email, password });
+                    if (regErr) {
+                        alert('登录/注册失败：' + regErr.message);
+                        return;
+                    }
+                    alert('注册成功，请重新登录');
+                    location.reload();
+                } else {
+                    document.getElementById('loginModal').classList.remove('active');
+                    location.reload();
+                }
+            } catch (e) {
+                alert('操作失败：' + e.message);
+            }
+        });
+    </script>
+
 </body>
 </html>

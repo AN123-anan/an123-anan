@@ -206,13 +206,12 @@
 .tutorial-wrap {
   z-index: 9999;
 }
-.tutorial-close, .tutorial-next-btn {
+.tutorial-close, [data-tutorial-next], [data-tutorial-prev] {
   pointer-events: auto;
   cursor: pointer;
-}
-    </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
+}    
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.106.1/dist/umd/supabase.min.js"></script></head>
 <body>
 <div id="bgLayer"></div>
 <div class="container">
@@ -1939,12 +1938,65 @@ if (!(date in stats)) {
     document.getElementById('removeDecoBtn').addEventListener('click', removeDeco);
 
     // ===== 教程 =====
-    const tutorialModal = document.getElementById('tutorialModal');
-    function showTutorial(){ tutorialModal.classList.add('active'); }
-    function hideTutorial(){ tutorialModal.classList.remove('active'); localStorage.setItem('nightfall_tutorial_done','1'); }
-    document.getElementById('tutorialBtn').addEventListener('click', showTutorial);
-    document.getElementById('closeTutorialBtn').addEventListener('click', hideTutorial);
-    document.getElementById('closeTutorialFooterBtn').addEventListener('click', hideTutorial);
+   // 教程弹窗完整分页逻辑
+const tutorialModal = document.getElementById('tutorialModal');
+let currentTutorialPage = 0;
+const totalTutorialPage = 3;
+const pages = document.querySelectorAll(".tutorial-page");
+const dots = document.querySelectorAll(".tutorial-nav .dots span");
+const prevBtn = document.querySelector("[data-tutorial-prev]");
+const nextBtn = document.querySelector("[data-tutorial-next]");
+
+// 显示指定页
+function renderTutorialPage(page) {
+  currentTutorialPage = page;
+  // 隐藏所有页面
+  pages.forEach(p => p.classList.remove("active"));
+  pages[page].classList.add("active");
+  // 更新圆点
+  dots.forEach((dot, idx) => dot.classList.toggle("active", idx === page));
+  // 控制按钮
+  prevBtn.style.visibility = page === 0 ? "hidden" : "visible";
+  // 最后一页切换文字
+  if(page === totalTutorialPage - 1){
+    nextBtn.textContent = "完成 🚀";
+  }else{
+    nextBtn.textContent = "下一步 →";
+  }
+}
+
+// 打开弹窗
+function showTutorial(){
+  tutorialModal.classList.add('active');
+  renderTutorialPage(0);
+}
+// 关闭弹窗并标记已看完
+function hideTutorial(){
+  tutorialModal.classList.remove('active');
+  localStorage.setItem('nightfall tutorial done','1');
+}
+
+// 绑定按钮点击
+document.getElementById('tutorialBtn').addEventListener('click', showTutorial);
+document.getElementById('closeTutorialBtn').addEventListener('click', hideTutorial);
+document.getElementById('closeTutorialFooterBtn').addEventListener('click', hideTutorial);
+
+// 上一步
+prevBtn.addEventListener("click", ()=>{
+  if(currentTutorialPage > 0) renderTutorialPage(currentTutorialPage - 1);
+});
+// 下一步/完成
+nextBtn.addEventListener("click", ()=>{
+  if(currentTutorialPage < totalTutorialPage - 1){
+    renderTutorialPage(currentTutorialPage + 1);
+  }else{
+    hideTutorial();
+  }
+});
+// 圆点点击跳转
+dots.forEach((dot,idx)=>{
+  dot.addEventListener("click", ()=> renderTutorialPage(idx));
+})
 
     // ===== 备份提醒 =====
     function checkBackup(){ const last = localStorage.getItem('nightfall_backup_ts'); if(!last || Date.now()-parseInt(last) > 7*24*3600*1000) document.getElementById('backupModal').classList.add('active'); }
@@ -2360,16 +2412,20 @@ document.getElementById("saveCollectionBtn").onclick = function () {
 
 // 登录/注册逻辑
 async function initAuthSync() {
+  // 新增兜底：CDN加载失败时直接提示，不卡死本地功能
+  if (!window.supabase) {
+    alert("云端同步组件加载失败，本地抽卡记录、新手教程功能可正常使用，切换网络刷新页面即可登录同步数据");
+    return;
+  }
+  // 下方原有代码保持不变
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
     currentUserId = user.id;
     await loadCloudData();
-
-  // 新增：登录完成再弹出新手引导
-if(!localStorage.getItem("nightfall tutorial done")){
-  showTutorialial();
-}
-
+    // 登录完成弹出新手引导（已修正函数名拼写错误）
+    if(!localStorage.getItem("nightfall tutorial done")){
+      showTutorial();
+    }
     // 实时监听云端数据变化，多设备即时同步
     supabase.channel("user_sync_channel")
       .on("postgres_changes", {
@@ -2389,7 +2445,7 @@ if(!localStorage.getItem("nightfall tutorial done")){
       alert("登录失败，刷新页面重试");
       return;
     }
-    // 尝试登录，不存在则自动注册
+    // 原有登录注册逻辑不变
     const { error } = await supabase.auth.signInWithPassword({ email, pwd });
     if (error) {
       const { error: regErr } = await supabase.auth.signUp({ email, pwd });
